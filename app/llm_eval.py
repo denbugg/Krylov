@@ -68,10 +68,30 @@ def _extract_json(text: str) -> Dict[str, Any]:
     except json.JSONDecodeError:
         pass
 
+    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.S)
+    if fenced:
+        return json.loads(fenced.group(1))
+
     match = re.search(r"\{.*\}", text, flags=re.S)
     if not match:
-        raise ValueError("Gemini did not return JSON")
+        raise ValueError("OpenAI did not return JSON")
     return json.loads(match.group(0))
+
+
+def _extract_openai_text(data: Dict[str, Any]) -> str:
+    output_text = data.get("output_text")
+    if isinstance(output_text, str) and output_text.strip():
+        return output_text
+
+    chunks: list[str] = []
+    for item in data.get("output", []) or []:
+        for content in item.get("content", []) or []:
+            text = content.get("text")
+            if isinstance(text, str):
+                chunks.append(text)
+    if chunks:
+        return "\n".join(chunks)
+    raise RuntimeError(f"Unexpected OpenAI response: {data}")
 
 
 async def evaluate_author_position(
@@ -83,7 +103,7 @@ async def evaluate_author_position(
     canonical_position: str,
     student_answer: str,
 ) -> AuthorPositionResult:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    url = "https://api.openai.com/v1/responses"
 
     user_payload = {
         "topic": topic,
@@ -93,33 +113,30 @@ async def evaluate_author_position(
     }
 
     body = {
-        "contents": [
+        "model": model,
+        "input": [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
             {
                 "role": "user",
-                "parts": [
-                    {"text": SYSTEM_PROMPT + "\n\nВходные данные:\n" + json.dumps(user_payload, ensure_ascii=False, indent=2)}
-                ],
-            }
+                "content": "Входные данные:\n" + json.dumps(user_payload, ensure_ascii=False, indent=2),
+            },
         ],
-        "generationConfig": {
-            "temperature": 0.1,
-            "responseMimeType": "application/json",
-        },
+        "temperature": 0.1,
+        "max_output_tokens": 700,
     }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=body, timeout=aiohttp.ClientTimeout(total=45)) as resp:
+        async with session.post(url, json=body, headers=headers, timeout=aiohttp.ClientTimeout(total=45)) as resp:
             if resp.status >= 400:
                 error_text = await resp.text()
-                raise RuntimeError(f"Gemini API error {resp.status}: {error_text[:1000]}")
+                raise RuntimeError(f"OpenAI API error {resp.status}: {error_text[:1000]}")
             data = await resp.json()
 
-    try:
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError, TypeError) as exc:
-        raise RuntimeError(f"Unexpected Gemini response: {data}") from exc
-
-    parsed = _extract_json(text)
+    parsed = _extract_json(_extract_openai_text(data))
 
     return AuthorPositionResult(
         score=_clamp_score(parsed.get("score")),

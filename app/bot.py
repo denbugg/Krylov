@@ -14,7 +14,7 @@ from aiogram.types import CallbackQuery, FSInputFile, Message
 
 from app.config import get_settings
 from app.data_loader import TaskRepository, VariantTask
-from app.gemini_eval import evaluate_author_position
+from app.llm_eval import evaluate_author_position
 from app.keyboards import (
     BTN_CANCEL,
     BTN_NEW,
@@ -133,7 +133,7 @@ async def cmd_start(message: Message) -> None:
     await message.answer(
         "<b>Тренажёр авторской позиции ЕГЭ</b>\n\n"
         "Я присылаю текст варианта, ты формулируешь авторскую позицию, "
-        "а Gemini сравнивает её с эталоном по смыслу.\n\n"
+        "а модель сравнивает её с эталоном по смыслу.\n\n"
         "Основное управление — кнопками на панели ниже.",
         reply_markup=main_reply_keyboard(),
     )
@@ -321,21 +321,21 @@ async def handle_author_position(message: Message, state: FSMContext) -> None:
         await message.answer("Ответ слишком короткий. Напиши авторскую позицию одним-двумя предложениями.")
         return
 
-    status = await message.answer("Проверяю авторскую позицию через Gemini...")
+    status = await message.answer("Проверяю авторскую позицию...")
 
     try:
         result = await evaluate_author_position(
-            api_key=settings.gemini_api_key,
-            model=settings.gemini_model,
+            api_key=settings.openai_api_key,
+            model=settings.openai_model,
             topic=task.topic,
             problem=task.problem,
             canonical_position=task.author_position,
             student_answer=student_answer,
         )
     except Exception as exc:
-        logger.exception("Gemini evaluation failed")
+        logger.exception("Author position evaluation failed")
         await status.edit_text(
-            "Не удалось получить оценку от Gemini.\n\n"
+            "Не удалось получить оценку.\n\n"
             f"<code>{escape(str(exc)[:1500])}</code>"
         )
         return
