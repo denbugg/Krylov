@@ -13,8 +13,8 @@ load_dotenv()
 @dataclass(frozen=True)
 class Settings:
     bot_token: str
-    openai_api_key: str
-    openai_model: str
+    gemini_api_key: str
+    gemini_model: str
     dataset_path: Path
     report_path: Path
     out_dir: Path
@@ -23,17 +23,17 @@ class Settings:
 
 def get_settings() -> Settings:
     bot_token = os.getenv("BOT_TOKEN", "").strip()
-    openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
 
     if not bot_token:
         raise RuntimeError("BOT_TOKEN is empty. Set it in .env")
-    if not openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is empty. Set it in .env")
+    if not gemini_api_key:
+        raise RuntimeError("GEMINI_API_KEY is empty. Set it in .env")
 
     return Settings(
         bot_token=bot_token,
-        openai_api_key=openai_api_key,
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-nano").strip(),
+        gemini_api_key=gemini_api_key,
+        gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip(),
         dataset_path=Path(os.getenv("DATASET_PATH", "data/positions.json")),
         report_path=Path(os.getenv("REPORT_PATH", "out/report.json")),
         out_dir=Path(os.getenv("OUT_DIR", "out")),
