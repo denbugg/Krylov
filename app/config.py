@@ -7,7 +7,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-load_dotenv()
+_PROJECT_ROOT = Path(__file__).parent.parent
+load_dotenv(_PROJECT_ROOT / ".env")
+
+
+def _abs(p: str) -> Path:
+    path = Path(p)
+    return path if path.is_absolute() else _PROJECT_ROOT / path
 
 
 @dataclass(frozen=True)
@@ -34,8 +40,8 @@ def get_settings() -> Settings:
         bot_token=bot_token,
         gemini_api_key=gemini_api_key,
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip(),
-        dataset_path=Path(os.getenv("DATASET_PATH", "data/positions.json")),
-        report_path=Path(os.getenv("REPORT_PATH", "out/report.json")),
-        out_dir=Path(os.getenv("OUT_DIR", "out")),
-        db_path=Path(os.getenv("DB_PATH", "bot.sqlite3")),
+        dataset_path=_abs(os.getenv("DATASET_PATH", "data/positions.json")),
+        report_path=_abs(os.getenv("REPORT_PATH", "out/report.json")),
+        out_dir=_abs(os.getenv("OUT_DIR", "out")),
+        db_path=_abs(os.getenv("DB_PATH", "bot.sqlite3")),
     )
