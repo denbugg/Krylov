@@ -3,5 +3,3 @@ bot.sqlite3
 __pycache__/
 *.pyc
 .venv/
-out/screens/*.png
-out/texts/*.txt
