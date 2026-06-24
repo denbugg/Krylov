@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import html
 import logging
+import time
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.default import DefaultBotProperties
@@ -66,6 +67,13 @@ def task_intro(task: VariantTask) -> str:
         f"{title}\n\n"
         "Выбери удобный формат чтения, затем нажми «Писать авторскую позицию»."
     )
+
+
+def fmt_time(seconds: int) -> str:
+    if seconds < 60:
+        return f"{seconds} сек"
+    m, s = divmod(seconds, 60)
+    return f"{m} мин {s} сек" if s else f"{m} мин"
 
 
 def split_long_text(text: str, limit: int = 3900) -> list[str]:
@@ -305,7 +313,7 @@ async def cb_answer(callback: CallbackQuery, state: FSMContext) -> None:
     task = repo.get(variant)
     await storage.log_event(user_id_from_callback(callback), "answer_start", variant=variant)
     await state.set_state(TrainingStates.waiting_author_position)
-    await state.update_data(variant=variant)
+    await state.update_data(variant=variant, answer_started_at=time.monotonic())
 
     await callback.message.answer(
         f"<b>Вариант {variant}</b>\n"
@@ -321,6 +329,8 @@ async def handle_author_position(message: Message, state: FSMContext) -> None:
     variant = int(data.get("variant"))
     task = repo.get(variant)
     student_answer = message.text or ""
+    started_at = data.get("answer_started_at")
+    answer_time_sec = int(time.monotonic() - started_at) if started_at else None
 
     if student_answer in {BTN_NEW, BTN_VARIANT, BTN_STATS, BTN_VARIANTS, BTN_CANCEL}:
         await message.answer(
@@ -334,7 +344,8 @@ async def handle_author_position(message: Message, state: FSMContext) -> None:
         return
 
     answer_len = len(student_answer.strip())
-    await storage.log_event(user_id, "answer_submitted", variant=variant, meta={"len": answer_len})
+    await storage.log_event(user_id, "answer_submitted", variant=variant,
+                            meta={"len": answer_len, "time_sec": answer_time_sec})
     status = await message.answer("Проверяю авторскую позицию через Gemini...")
 
     try:
@@ -367,6 +378,7 @@ async def handle_author_position(message: Message, state: FSMContext) -> None:
         feedback=result.feedback,
         safe_revision=result.safe_revision,
         raw=result.raw,
+        answer_time_sec=answer_time_sec,
     )
     await storage.log_event(user_id, "gemini_ok", variant=variant,
                             meta={"score": result.score, "confidence": result.confidence, "label": result.label})
@@ -458,6 +470,7 @@ async def send_stats(message: Message, user_id: int) -> None:
     total_scored = sum(item.author_score for item in latest)
     progress = (total_scored / total_possible * 100) if total_possible else 0.0
     topic_stats = await storage.get_topic_stats(user_id)
+    time_stats = await storage.get_time_stats(user_id)
 
     lines = [
         "<b>Статистика</b>",
@@ -465,10 +478,16 @@ async def send_stats(message: Message, user_id: int) -> None:
         f"Уникальных вариантов: <b>{unique_count}</b>",
         f"Средний балл: <b>{avg:.2f}/3</b>",
         f"Набрано: <b>{total_scored:.1f}/{total_possible}</b> ({progress:.0f}%)",
-        "",
-        "<b>Темы от слабых к сильным:</b>",
     ]
 
+    if time_stats:
+        lines.append(
+            f"Время на ответ: avg <b>{fmt_time(time_stats['avg'])}</b>"
+            f" · быстрейший {fmt_time(time_stats['min'])}"
+            f" · дольше всего {fmt_time(time_stats['max'])}"
+        )
+
+    lines += ["", "<b>Темы от слабых к сильным:</b>"]
     for topic, count, avg_score in topic_stats:
         lines.append(f"• {escape(topic)} — {avg_score:.2f}/3 · вариантов: {count}")
 
@@ -515,10 +534,15 @@ async def cmd_admin(message: Message) -> None:
         "<b>Уверенность Gemini:</b>\n"
         f"  низкая (<0.5): {conf['low<0.5']}  |  средняя: {conf['mid0.5–0.8']}  |  высокая: {conf['high≥0.8']}\n\n"
         f"<b>Формат чтения:</b> текст {fp['text']} / скрин {fp['screen']}\n"
-        f"<b>Длина ответа:</b> avg {al['avg']} симв., min {al['min']}, max {al['max']}\n\n"
+        f"<b>Длина ответа:</b> avg {al['avg']} симв., min {al['min']}, max {al['max']}\n"
+        + (f"<b>Время на ответ:</b> avg {fmt_time(s['answer_time']['avg'])}"
+           f" · min {fmt_time(s['answer_time']['min'])}"
+           f" · max {fmt_time(s['answer_time']['max'])}\n\n"
+           if s.get("answer_time") else "<b>Время на ответ:</b> пока нет данных\n\n")
+        +
         "<b>Сложнейшие варианты (≥2 попытки):</b>\n"
         f"{hard}"
-    )
+    )  # fmt_time used above for answer_time block
     await message.answer(text[:4096])
 
 

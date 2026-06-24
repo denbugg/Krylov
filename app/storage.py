@@ -73,6 +73,12 @@ class Storage:
                 """
             )
             await db.commit()
+            # non-destructive migration: add column if first run after upgrade
+            try:
+                await db.execute("ALTER TABLE attempts ADD COLUMN answer_time_sec INTEGER")
+                await db.commit()
+            except Exception:
+                pass
 
     async def save_attempt(
         self,
@@ -88,15 +94,17 @@ class Storage:
         feedback: str,
         safe_revision: str,
         raw: dict,
+        answer_time_sec: int | None = None,
     ) -> int:
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
                 """
                 INSERT INTO attempts (
                     user_id, variant, topic, problem, student_answer,
-                    author_score, label, confidence, feedback, safe_revision, raw_json
+                    author_score, label, confidence, feedback, safe_revision, raw_json,
+                    answer_time_sec
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     user_id,
@@ -110,6 +118,7 @@ class Storage:
                     feedback,
                     safe_revision,
                     json.dumps(raw, ensure_ascii=False),
+                    answer_time_sec,
                 ),
             )
             attempt_id = cur.lastrowid
@@ -179,6 +188,21 @@ class Storage:
             cur = await db.execute("SELECT COUNT(*) FROM attempts WHERE user_id = ?", (user_id,))
             row = await cur.fetchone()
         return int(row[0] or 0)
+
+    async def get_time_stats(self, user_id: int) -> dict[str, Any]:
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                """
+                SELECT AVG(answer_time_sec), MIN(answer_time_sec), MAX(answer_time_sec), COUNT(*)
+                FROM attempts
+                WHERE user_id = ? AND answer_time_sec IS NOT NULL
+                """,
+                (user_id,),
+            )
+            row = await cur.fetchone()
+        if not row or not row[3]:
+            return {}
+        return {"avg": int(row[0]), "min": int(row[1]), "max": int(row[2]), "count": int(row[3])}
 
     async def get_topic_stats(self, user_id: int) -> list[tuple[str, int, float]]:
         async with aiosqlite.connect(self.db_path) as db:
@@ -293,6 +317,17 @@ class Storage:
             row = await cur.fetchone()
             answer_len = {"avg": int(row[0] or 0), "min": int(row[1] or 0), "max": int(row[2] or 0)}
 
+            # answer time stats (global)
+            cur = await db.execute(
+                """
+                SELECT AVG(answer_time_sec), MIN(answer_time_sec), MAX(answer_time_sec)
+                FROM attempts WHERE answer_time_sec IS NOT NULL
+                """
+            )
+            row = await cur.fetchone()
+            answer_time = ({"avg": int(row[0]), "min": int(row[1]), "max": int(row[2])}
+                           if row and row[0] is not None else {})
+
         return {
             "total_users": total_users,
             "funnel": funnel,
@@ -305,4 +340,5 @@ class Storage:
             "hard_variants": hard_variants,
             "format_pref": {"text": fmt_text, "screen": fmt_screen},
             "answer_len": answer_len,
+            "answer_time": answer_time,
         }
