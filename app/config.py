@@ -25,6 +25,7 @@ class Settings:
     report_path: Path
     out_dir: Path
     db_path: Path
+    admin_user_id: int | None
 
 
 def get_settings() -> Settings:
@@ -44,4 +45,5 @@ def get_settings() -> Settings:
         report_path=_abs(os.getenv("REPORT_PATH", "out/report.json")),
         out_dir=_abs(os.getenv("OUT_DIR", "out")),
         db_path=_abs(os.getenv("DB_PATH", "bot.sqlite3")),
+        admin_user_id=int(os.getenv("ADMIN_USER_ID")) if os.getenv("ADMIN_USER_ID") else None,
     )

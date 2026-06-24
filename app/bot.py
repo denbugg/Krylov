@@ -102,10 +102,13 @@ async def send_task(message_or_callback, task: VariantTask, state: FSMContext | 
     )
 
     if isinstance(message_or_callback, CallbackQuery):
+        user_id = user_id_from_callback(message_or_callback)
         await message_or_callback.message.answer(task_intro(task), reply_markup=markup)
     else:
+        user_id = user_id_from_message(message_or_callback)
         await message_or_callback.answer(task_intro(task), reply_markup=markup)
 
+    await storage.log_event(user_id, "task_shown", variant=task.variant)
     if state:
         await state.update_data(variant=task.variant)
 
@@ -130,6 +133,8 @@ async def choose_new_task(user_id: int) -> VariantTask:
 
 @router.message(Command("start"))
 async def cmd_start(message: Message) -> None:
+    user_id = user_id_from_message(message)
+    await storage.log_event(user_id, "session_start")
     await message.answer(
         "<b>Тренажёр авторской позиции ЕГЭ</b>\n\n"
         "Я присылаю текст варианта, ты формулируешь авторскую позицию, "
@@ -143,6 +148,8 @@ async def cmd_start(message: Message) -> None:
 @router.message(Command("cancel"))
 @router.message(F.text == BTN_CANCEL)
 async def cmd_cancel(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    await storage.log_event(user_id_from_message(message), "cancelled", variant=data.get("variant"))
     await state.clear()
     await message.answer("Текущая отработка сброшена.", reply_markup=main_reply_keyboard())
     await show_main_menu(message)
@@ -150,6 +157,8 @@ async def cmd_cancel(message: Message, state: FSMContext) -> None:
 
 @router.callback_query(F.data == "cancel")
 async def cb_cancel(callback: CallbackQuery, state: FSMContext) -> None:
+    data = await state.get_data()
+    await storage.log_event(user_id_from_callback(callback), "cancelled", variant=data.get("variant"))
     await state.clear()
     await callback.answer()
     await callback.message.answer("Текущая отработка сброшена.", reply_markup=main_reply_keyboard())
@@ -233,6 +242,7 @@ async def cmd_variant(message: Message, command: CommandObject, state: FSMContex
 async def cb_text(callback: CallbackQuery) -> None:
     await callback.answer()
     variant = int(callback.data.split(":")[1])
+    await storage.log_event(user_id_from_callback(callback), "format_text", variant=variant)
     task = repo.get(variant)
     path = repo.text_path(task)
 
@@ -259,6 +269,7 @@ async def cb_text(callback: CallbackQuery) -> None:
 async def cb_screen(callback: CallbackQuery) -> None:
     await callback.answer()
     variant = int(callback.data.split(":")[1])
+    await storage.log_event(user_id_from_callback(callback), "format_screen", variant=variant)
     task = repo.get(variant)
     path = repo.screenshot_path(task)
 
@@ -292,6 +303,7 @@ async def cb_answer(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
     variant = int(callback.data.split(":")[1])
     task = repo.get(variant)
+    await storage.log_event(user_id_from_callback(callback), "answer_start", variant=variant)
     await state.set_state(TrainingStates.waiting_author_position)
     await state.update_data(variant=variant)
 
@@ -321,6 +333,8 @@ async def handle_author_position(message: Message, state: FSMContext) -> None:
         await message.answer("Ответ слишком короткий. Напиши авторскую позицию одним-двумя предложениями.")
         return
 
+    answer_len = len(student_answer.strip())
+    await storage.log_event(user_id, "answer_submitted", variant=variant, meta={"len": answer_len})
     status = await message.answer("Проверяю авторскую позицию через Gemini...")
 
     try:
@@ -334,6 +348,7 @@ async def handle_author_position(message: Message, state: FSMContext) -> None:
         )
     except Exception as exc:
         logger.exception("Gemini evaluation failed")
+        await storage.log_event(user_id, "gemini_error", variant=variant, meta={"error": str(exc)[:300]})
         await status.edit_text(
             "Не удалось получить оценку от Gemini.\n\n"
             f"<code>{escape(str(exc)[:1500])}</code>"
@@ -353,6 +368,8 @@ async def handle_author_position(message: Message, state: FSMContext) -> None:
         safe_revision=result.safe_revision,
         raw=result.raw,
     )
+    await storage.log_event(user_id, "gemini_ok", variant=variant,
+                            meta={"score": result.score, "confidence": result.confidence, "label": result.label})
 
     matched = "\n".join(f"• {escape(x)}" for x in result.matched_points) or "—"
     missing = "\n".join(f"• {escape(x)}" for x in result.missing_points) or "—"
@@ -456,6 +473,53 @@ async def send_stats(message: Message, user_id: int) -> None:
         lines.append(f"• {escape(topic)} — {avg_score:.2f}/3 · вариантов: {count}")
 
     await message.answer("\n".join(lines)[:4096], reply_markup=main_menu_keyboard())
+
+
+@router.message(Command("admin"))
+async def cmd_admin(message: Message) -> None:
+    admin_id = settings.admin_user_id
+    if admin_id and user_id_from_message(message) != admin_id:
+        await message.answer("Нет доступа.")
+        return
+
+    s = await storage.get_aggregate_stats()
+    f = s["funnel"]
+
+    def pct(a: int, b: int) -> str:
+        return f"{a / b * 100:.0f}%" if b else "—"
+
+    hard = "\n".join(
+        f"  вар.{v}: {cnt} попыток, avg {avg:.2f}/3"
+        for v, cnt, avg in s["hard_variants"]
+    ) or "  данных пока нет"
+
+    dist = s["score_dist"]
+    conf = s["confidence_dist"]
+    fp = s["format_pref"]
+    al = s["answer_len"]
+
+    text = (
+        "<b>📊 Агрегированная статистика</b>\n\n"
+        f"<b>Пользователей:</b> {s['total_users']}\n"
+        f"<b>Всего попыток:</b> {s['total_attempts']}\n"
+        f"<b>Средний балл:</b> {s['avg_score']:.2f}/3\n\n"
+        "<b>Воронка (уникальных юзеров):</b>\n"
+        f"  🟢 Запустили бота: {f.get('session_start', 0)}\n"
+        f"  📋 Увидели задание: {f.get('task_shown', 0)} ({pct(f.get('task_shown', 0), f.get('session_start', 1))})\n"
+        f"  ✍️ Начали писать: {f.get('answer_start', 0)} ({pct(f.get('answer_start', 0), f.get('task_shown', 1))})\n"
+        f"  📤 Отправили ответ: {f.get('answer_submitted', 0)} ({pct(f.get('answer_submitted', 0), f.get('answer_start', 1))})\n"
+        f"  ✅ Получили оценку: {f.get('gemini_ok', 0)} ({pct(f.get('gemini_ok', 0), f.get('answer_submitted', 1))})\n\n"
+        f"<b>Отмены:</b> {s['cancellations']}  |  <b>Ошибки Gemini:</b> {s['gemini_errors']}\n\n"
+        "<b>Распределение баллов:</b>\n"
+        f"  0–1: {dist['0–1']}  |  1–2: {dist['1–2']}  |  2–3: {dist['2–3']}  |  3: {dist['3']}\n\n"
+        "<b>Уверенность Gemini:</b>\n"
+        f"  низкая (<0.5): {conf['low<0.5']}  |  средняя: {conf['mid0.5–0.8']}  |  высокая: {conf['high≥0.8']}\n\n"
+        f"<b>Формат чтения:</b> текст {fp['text']} / скрин {fp['screen']}\n"
+        f"<b>Длина ответа:</b> avg {al['avg']} симв., min {al['min']}, max {al['max']}\n\n"
+        "<b>Сложнейшие варианты (≥2 попытки):</b>\n"
+        f"{hard}"
+    )
+    await message.answer(text[:4096])
 
 
 @router.message()
