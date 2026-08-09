@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="/static/site.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":["SportsActivityLocation","LocalBusiness"],"name":"Школа художественной гимнастики ELITE","url":"{{ base_url }}/","telephone":"{{ phone_e164 }}","address":{"@type":"PostalAddress","addressLocality":"Москва","streetAddress":"Боровское шоссе, 43, этаж 3","addressCountry":"RU"},"sameAs":{{ same_as_json|safe }}}</script>
 </head>
-<body>
+<body data-telegram-url="{{ telegram_url }}">
 <main>
 <section class="hero" id="top">
   <div class="shell hero-grid">
@@ -29,7 +29,7 @@
       <p>Для девочек 3–5 лет. Можно без подготовки: движение, музыка, предметы и спокойное знакомство с тренировочным ритмом.</p>
       <div class="hero-facts"><b>Пробное — 0 ₽</b><span>Абонемент — 8 000 ₽/мес.</span></div>
       <div class="hero-actions">
-        <button class="btn" data-connect data-source="hero">Записаться бесплатно</button>
+        <button class="btn" data-telegram data-source="hero">Записаться бесплатно в Telegram</button>
         <a class="btn secondary" href="#location">Посмотреть, где мы</a>
       </div>
     </div>
@@ -92,8 +92,8 @@
   <div class="shell">
     <span class="eyebrow">ГРУППЫ</span><h2>Сейчас — начало.<br><span class="serif">Дальше — по интересу.</span></h2>
     <div class="groups-grid">
-      <article class="group"><strong>3–5</strong><h3>Набор открыт</h3><p>Начальная группа для первого знакомства с художественной гимнастикой. Можно без подготовки.</p><div class="price"><div><span>Абонемент</span><br><b>8 000 ₽</b> / месяц</div><button class="btn" data-connect data-source="group_3_5">Пробное — 0 ₽</button></div></article>
-      <article class="group"><strong>6–10</strong><h3>Собираем заявки</h3><p>Планируемая группа для девочек постарше. Оставьте контакт — сообщим, когда сформируется расписание.</p><div class="price"><span>Лист ожидания</span><button class="btn secondary" data-connect data-source="group_6_10">Оставить контакт</button></div></article>
+      <article class="group"><strong>3–5</strong><h3>Набор открыт</h3><p>Начальная группа для первого знакомства с художественной гимнастикой. Можно без подготовки.</p><div class="price"><div><span>Абонемент</span><br><b>8 000 ₽</b> / месяц</div><button class="btn" data-telegram data-source="group_3_5">Пробное — 0 ₽</button></div></article>
+      <article class="group"><strong>6–10</strong><h3>Собираем заявки</h3><p>Планируемая группа для девочек постарше. Оставьте контакт — сообщим, когда сформируется расписание.</p><div class="price"><span>Лист ожидания</span><button class="btn secondary" data-telegram data-source="group_6_10">Оставить контакт в Telegram</button></div></article>
     </div>
   </div>
 </section>
@@ -131,7 +131,7 @@
 </section>
 </main>
 <footer class="footer"><div class="shell footer-row"><img class="wordmark" src="/static/assets/elite-wordmark.svg" alt="ELITE"><span>Художественная гимнастика · Ново‑Переделкино</span><span>© 2026 ELITE · <a href="/privacy">Конфиденциальность</a> · <a href="/consent">Согласие</a></span></div></footer>
-<div class="sticky" data-sticky><button data-connect data-source="sticky">Пробное бесплатно · Записаться</button></div>
+<div class="sticky" data-sticky><button data-telegram data-source="sticky">Пробное бесплатно · Telegram</button></div>
 <div class="sheet" data-sheet aria-hidden="true">
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="contact-title">
     <div class="sheet-inner">
@@ -141,7 +141,7 @@
         {% if telegram_url %}<a class="channel primary" href="{{ telegram_url }}" target="_blank" rel="noopener">Telegram →</a>{% else %}<a class="channel primary" href="https://t.me/Undina_007" target="_blank" rel="noopener">Telegram →</a>{% endif %}
         {% if max_url %}<a class="channel" href="{{ max_url }}" target="_blank" rel="noopener">MAX →</a>{% else %}<div class="channel" aria-disabled="true">MAX · подключаем</div>{% endif %}
       </div>
-      <div class="bot-note">Следующий шаг — заменить прямой Telegram-контакт на бота: он сам спросит имя/возраст/удобное время и передаст диалог администратору. Та же логика будет у MAX.</div>
+      <div class="bot-note">Telegram — основной путь записи: бот получает имя из профиля и просит поделиться контактом одной системной кнопкой. MAX подключим аналогично; обратный звонок остаётся альтернативой.</div>
       <div class="callback">
         <h3>Или заказать звонок</h3><p>Телефон обязателен, имя — по желанию.</p>
         <form class="form" id="lead-form">

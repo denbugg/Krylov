@@ -1,9 +1,24 @@
 (() => {
   const hero=document.querySelector('.hero'), sticky=document.querySelector('[data-sticky]'), sheet=document.querySelector('[data-sheet]'), form=document.querySelector('#lead-form');
   let source='unknown';
+  const telegramUrl=(document.body.dataset.telegramUrl||'').trim();
+  const telegramForSource=(src)=>{
+    if(!telegramUrl)return '';
+    try{
+      const u=new URL(telegramUrl);
+      if(u.hostname==='t.me'&&u.searchParams.has('start'))u.searchParams.set('start',(src||'site').slice(0,64).replace(/[^A-Za-z0-9_-]/g,'_'));
+      return u.toString();
+    }catch(_){return telegramUrl}
+  };
   if(hero&&sticky){new IntersectionObserver(([e])=>sticky.classList.toggle('is-visible',!e.isIntersecting),{threshold:.12}).observe(hero)}
-  document.querySelectorAll('[data-connect]').forEach(btn=>btn.addEventListener('click',()=>{source=btn.dataset.source||'unknown';sheet.classList.add('open');sheet.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';form.source.value=source}));
-  const close=()=>{sheet.classList.remove('open');sheet.setAttribute('aria-hidden','true');document.body.style.overflow=''};
+  document.querySelectorAll('[data-telegram]').forEach(btn=>btn.addEventListener('click',()=>{
+    source=btn.dataset.source||'site';
+    const href=telegramForSource(source);
+    if(href){window.location.href=href;return}
+    sheet?.classList.add('open');sheet?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(form?.source)form.source.value=source;
+  }));
+  document.querySelectorAll('[data-connect]').forEach(btn=>btn.addEventListener('click',()=>{source=btn.dataset.source||'unknown';sheet?.classList.add('open');sheet?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(form?.source)form.source.value=source}));
+  const close=()=>{sheet?.classList.remove('open');sheet?.setAttribute('aria-hidden','true');document.body.style.overflow=''};
   document.querySelector('[data-close]')?.addEventListener('click',close);sheet?.addEventListener('click',e=>{if(e.target===sheet)close()});document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
   form?.addEventListener('submit',async e=>{e.preventDefault();const status=form.querySelector('.form-status'),button=form.querySelector('button[type=submit]');status.textContent='Отправляем…';button.disabled=true;
     const payload=Object.fromEntries(new FormData(form).entries());payload.page=location.pathname;payload.referrer=document.referrer;payload.preferred_channel='callback';payload.utm=Object.fromEntries([...new URLSearchParams(location.search)].filter(([k])=>k.startsWith('utm_')));
