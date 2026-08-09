@@ -7,6 +7,11 @@ set -euo pipefail
 : "${GIT_REPO_SSH:=https://github.com/denbugg/Krylov.git}"
 : "${SITE_ENV:=staging}"
 : "${SITE_INDEXABLE:=false}"
+: "${SITE_ADDRESS:=Москва, Боровское шоссе, 43, этаж 3}"
+: "${SITE_TELEGRAM_URL:=}"
+: "${SITE_MAX_URL:=}"
+: "${SITE_PHONE_DISPLAY:=}"
+: "${SITE_PHONE_E164:=}"
 
 apt-get update
 apt-get install -y git nginx python3-venv python3-pip ufw curl
@@ -21,6 +26,7 @@ if [ ! -d /srv/elite/repo/.git ]; then
   sudo -u elite git -C /srv/elite/repo sparse-checkout set site
   sudo -u elite git -C /srv/elite/repo checkout sitest
 fi
+chown -R elite:elite /srv/elite/repo
 ln -sfn /srv/elite/repo/site /srv/elite/site
 
 python3 -m venv /srv/elite/venv
@@ -32,6 +38,11 @@ SITE_ENV=$SITE_ENV
 SITE_DOMAIN=$DOMAIN
 SITE_SCHEME=https
 SITE_INDEXABLE=$SITE_INDEXABLE
+SITE_ADDRESS=$SITE_ADDRESS
+SITE_TELEGRAM_URL=$SITE_TELEGRAM_URL
+SITE_MAX_URL=$SITE_MAX_URL
+SITE_PHONE_DISPLAY=$SITE_PHONE_DISPLAY
+SITE_PHONE_E164=$SITE_PHONE_E164
 PORT=8000
 EOF
 chmod 600 /etc/elite/elite.env
@@ -40,6 +51,9 @@ sed "s/__DOMAIN__/$DOMAIN/g" /srv/elite/site/deploy/nginx.conf.template >/etc/ng
 ln -sfn /etc/nginx/sites-available/elite /etc/nginx/sites-enabled/elite
 rm -f /etc/nginx/sites-enabled/default
 cp /srv/elite/site/deploy/elite.service /etc/systemd/system/elite.service
+install -m 0755 /srv/elite/site/deploy/update.sh /usr/local/sbin/elite-update
+install -m 0755 /srv/elite/site/deploy/rollback.sh /usr/local/sbin/elite-rollback
+mkdir -p /var/lib/elite
 
 systemctl daemon-reload
 systemctl enable --now elite

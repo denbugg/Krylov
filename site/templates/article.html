@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#fdfaff">
   <title>Что нужно для художественной гимнастики: форма, предметы и первое занятие — ELITE</title>
   <meta name="description" content="Практический гид для родителей: что купить к первому занятию, что можно не покупать заранее и как подобрать форму и предметы ребёнку.">
-  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="robots" content="{{ robots }}">
   <link rel="canonical" href="{{ canonical_url }}">
   <link rel="icon" href="/static/assets/d1e3a10e324cb5a3.svg" type="image/svg+xml">
   <meta property="og:type" content="article">
@@ -16,6 +16,7 @@
   <meta property="og:description" content="Практический гид для родителей: что купить к первому занятию, что можно не покупать заранее и как подобрать форму и предметы ребёнку.">
   <meta property="og:url" content="{{ canonical_url }}">
   <meta property="og:image" content="{{ base_url }}/static/assets/b2742db07725688c.webp">
+  <meta property="og:image:alt" content="Занятие художественной гимнастикой в ELITE">
   <meta name="twitter:card" content="summary_large_image">
   <script>document.documentElement.classList.add('js')</script>
   
@@ -29,23 +30,18 @@
         "@id":"{{ base_url }}/#club",
         "name":"\u0426\u0435\u043d\u0442\u0440 \u0445\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0438 ELITE",
         "description":"\u0425\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u0430\u044f \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0430 \u0434\u043b\u044f \u0434\u0435\u0442\u0435\u0439 \u0432 \u043e\u0434\u043d\u043e\u043c \u0441\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e\u043c \u0437\u0430\u043b\u0435",
-        "telephone":"+7 (499) 136-81-80",
-        "email":"pirouette.manager@gmail.com",
+        {% if phone_e164 %}"telephone":"{{ phone_e164 }}",{% endif %}
         "url":"{{ base_url }}/",
-        "image":"{{ base_url }}//static/assets/b2742db07725688c.webp",
+        "image":"{{ base_url }}/static/assets/b2742db07725688c.webp",
         "priceRange":"₽₽",
         "address":{
           "@type":"PostalAddress",
           "addressCountry":"RU",
-          "addressLocality":"\u041c\u043e\u0441\u043a\u0432\u0430",
-          "streetAddress":"\u041c\u043e\u0441\u043a\u0432\u0430, \u0442\u043e\u0447\u043d\u044b\u0439 \u0430\u0434\u0440\u0435\u0441 \u0437\u0430\u043b\u0430 \u0431\u0443\u0434\u0435\u0442 \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d \u043f\u0435\u0440\u0435\u0434 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0435\u0439"
+          "addressLocality":"Москва",
+          "addressRegion":"Ново-Переделкино",
+          "streetAddress":"Боровское шоссе, 43, этаж 3"
         },
-        "openingHoursSpecification":[{
-          "@type":"OpeningHoursSpecification",
-          "dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-          "opens":"10:00","closes":"22:00"
-        }],
-        "sameAs":["https://vk.com/","https://t.me/"]
+        "sameAs":{{ same_as_json|safe }}
         
       },
       {
@@ -62,7 +58,7 @@
   
 <script type="application/ld+json">{
   "@context":"https://schema.org","@graph":[
-    {"@type":"Article","headline":"\u0427\u0442\u043e \u043d\u0443\u0436\u043d\u043e \u0434\u043b\u044f \u0445\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0438: \u0444\u043e\u0440\u043c\u0430, \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u044b \u0438 \u043f\u0435\u0440\u0432\u043e\u0435 \u0437\u0430\u043d\u044f\u0442\u0438\u0435","description":"\u041f\u0440\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0439 \u0433\u0438\u0434 \u0434\u043b\u044f \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u0435\u0439: \u0447\u0442\u043e \u043a\u0443\u043f\u0438\u0442\u044c \u043a \u043f\u0435\u0440\u0432\u043e\u043c\u0443 \u0437\u0430\u043d\u044f\u0442\u0438\u044e, \u0447\u0442\u043e \u043c\u043e\u0436\u043d\u043e \u043d\u0435 \u043f\u043e\u043a\u0443\u043f\u0430\u0442\u044c \u0437\u0430\u0440\u0430\u043d\u0435\u0435 \u0438 \u043a\u0430\u043a \u043f\u043e\u0434\u043e\u0431\u0440\u0430\u0442\u044c \u0444\u043e\u0440\u043c\u0443 \u0438 \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u044b \u0440\u0435\u0431\u0451\u043d\u043a\u0443.","datePublished":"2026-08-07","dateModified":"2026-08-07","inLanguage":"ru-RU","author":{"@type":"Organization","name":"\u0426\u0435\u043d\u0442\u0440 \u0445\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0438 ELITE"},"publisher":{"@type":"Organization","name":"\u0426\u0435\u043d\u0442\u0440 \u0445\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0438 ELITE"},"mainEntityOfPage":"{{ base_url }}/article-chto-nuzhno-dlya-hudozhestvennoy-gimnastiki.html"},
+    {"@type":"Article","headline":"\u0427\u0442\u043e \u043d\u0443\u0436\u043d\u043e \u0434\u043b\u044f \u0445\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0438: \u0444\u043e\u0440\u043c\u0430, \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u044b \u0438 \u043f\u0435\u0440\u0432\u043e\u0435 \u0437\u0430\u043d\u044f\u0442\u0438\u0435","description":"\u041f\u0440\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0439 \u0433\u0438\u0434 \u0434\u043b\u044f \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u0435\u0439: \u0447\u0442\u043e \u043a\u0443\u043f\u0438\u0442\u044c \u043a \u043f\u0435\u0440\u0432\u043e\u043c\u0443 \u0437\u0430\u043d\u044f\u0442\u0438\u044e, \u0447\u0442\u043e \u043c\u043e\u0436\u043d\u043e \u043d\u0435 \u043f\u043e\u043a\u0443\u043f\u0430\u0442\u044c \u0437\u0430\u0440\u0430\u043d\u0435\u0435 \u0438 \u043a\u0430\u043a \u043f\u043e\u0434\u043e\u0431\u0440\u0430\u0442\u044c \u0444\u043e\u0440\u043c\u0443 \u0438 \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u044b \u0440\u0435\u0431\u0451\u043d\u043a\u0443.","datePublished":"2026-08-07","dateModified":"2026-08-09","inLanguage":"ru-RU","author":{"@type":"Organization","name":"\u0426\u0435\u043d\u0442\u0440 \u0445\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0438 ELITE"},"publisher":{"@type":"Organization","name":"\u0426\u0435\u043d\u0442\u0440 \u0445\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0438 ELITE"},"mainEntityOfPage":"{{ canonical_url }}"},
     {"@type":"FAQPage","mainEntity":[
       {"@type":"Question","name":"Нужно ли покупать гимнастические предметы до первого занятия?","acceptedAnswer":{"@type":"Answer","text":"Нет. На первом занятии достаточно удобной формы, воды и аккуратно собранных волос. Персональные предметы лучше выбирать после рекомендации тренера."}},
       {"@type":"Question","name":"Какая одежда подходит начинающему ребёнку?","acceptedAnswer":{"@type":"Answer","text":"Облегающая футболка или топ и легинсы позволяют тренеру видеть положение корпуса и суставов. Для первых занятий дорогой купальник не требуется."}}
@@ -279,12 +275,12 @@ html.js [data-hero-anim]{opacity:0;transition-property:opacity,transform;transit
     <div class="v4-shell v4-utility__inner">
       <nav aria-label="Дополнительная навигация">
         
-        <a href="about.html">О КЛУБЕ</a><a href="blog.html">СТАТЬИ</a><a href="faq.html">FAQ</a>
+        <a href="/#about">О КЛУБЕ</a><a href="/article/hudozhestvennaya-gimnastika-s-3-let">СТАТЬИ</a><a href="/#faq">FAQ</a>
         
       </nav>
       <div class="v4-utility__right">
         <span class="v4-location">● Москва</span>
-        <span>Ежедневно 10:00–22:00</span>
+        <span>Занятия по расписанию</span>
         <button type="button" data-ref-modal-open>ЗАПИСАТЬСЯ НА ЗАНЯТИЕ</button>
       </div>
     </div>
@@ -292,31 +288,30 @@ html.js [data-hero-anim]{opacity:0;transition-property:opacity,transform;transit
 
   <header class="v4-header" data-ref-header>
     <div class="v4-shell v4-header__inner">
-      <a class="v4-brand" href="index.html" aria-label="ELITE — главная">
+      <a class="v4-brand" href="/" aria-label="ELITE — главная">
         <img src="/static/assets/d1e3a10e324cb5a3.svg" alt="ELITE" width="100" height="56">
       </a>
       <nav class="v4-nav" aria-label="Основная навигация">
         
-        <a href="programs.html">Направления</a><a href="hall.html">Зал</a><a href="team.html">Команда</a><a href="prices.html">Цены</a><a href="about.html">О нас</a><a href="contacts.html">Контакты</a>
+        <a href="/#groups">Группы</a><a href="/#contacts">Зал</a><a href="/#about">О клубе</a><a href="/#price">Цены</a><a href="/#faq">FAQ</a><a href="/#contacts">Контакты</a>
         
       </nav>
       <div class="v4-header__actions">
-        <a class="v4-phone" href="tel:+74991368180">+7 (499) 136-81-80</a>
+        {% if phone_href %}<a class="v4-phone" href="{{ phone_href }}">{{ phone_display }}</a>{% endif %}
         <button class="v4-btn v4-btn--pink v4-btn--compact" type="button" data-ref-modal-open>Записаться</button>
         <button class="v4-burger" type="button" aria-label="Открыть меню" aria-expanded="false" data-ref-menu-toggle><span></span><span></span></button>
       </div>
     </div>
     <div class="v4-mobile-menu ref-mobile-menu" data-ref-mobile-menu>
       <div class="v4-shell">
-        <a href="index.html">Главная</a>
-        <a href="programs.html">Направления</a>
-        <a href="hall.html">Зал и расписание</a>
-        <a href="team.html">Команда</a>
-        <a href="prices.html">Цены</a>
-        <a href="about.html">О клубе</a>
-        <a href="blog.html">Статьи</a>
-        <a href="faq.html">FAQ</a>
-        <a href="contacts.html">Контакты</a>
+        <a href="/">Главная</a>
+        <a href="/#groups">Группы</a>
+        <a href="/#contacts">Зал и адрес</a>
+        <a href="/#about">О клубе</a>
+        <a href="/#price">Цены</a>
+        <a href="/article/hudozhestvennaya-gimnastika-s-3-let">Статьи</a>
+        <a href="/#faq">FAQ</a>
+        <a href="/#contacts">Контакты</a>
         <button class="v4-btn v4-btn--pink" type="button" data-ref-modal-open>Записаться на занятие</button>
       </div>
     </div>
@@ -351,7 +346,7 @@ html.js [data-hero-anim]{opacity:0;transition-property:opacity,transform;transit
 <div class="v4-article-faq"><details><summary>Нужно ли покупать предметы до первого занятия?</summary><p>Нет. Для знакомства с гимнастикой клубный инвентарь обычно достаточен. Личный предмет разумнее покупать после рекомендации тренера.</p></details><details><summary>Нужен ли гимнастический купальник?</summary><p>Для пробной и обычных начальных тренировок — нет. Главное, чтобы одежда была удобной и позволяла тренеру видеть положение корпуса и ног.</p></details><details><summary>Можно ли прийти ребёнку без подготовки?</summary><p>Да. Начинающие группы как раз рассчитаны на детей без спортивного опыта; нагрузка должна повышаться постепенно.</p></details></div>
 </div>
 </article>
-<section class="v4-related"><div class="v4-shell"><h2>Читайте дальше</h2><div class="v4-blog-grid"><a class="v4-blog-card" href="program-rhythmic-gymnastics.html"><img src="/static/assets/2b24cd360be3907a.webp" alt="Художественная гимнастика для детей"><div class="v4-blog-card__copy"><h2>Художественная гимнастика для детей 3–10 лет</h2><p>Как устроено направление и чего ждать от первых месяцев занятий.</p></div></a></div></div></section>
+<section class="v4-related"><div class="v4-shell"><h2>Первое занятие в ELITE</h2><div class="v4-blog-grid"><a class="v4-blog-card" href="/#groups"><img src="/static/assets/2b24cd360be3907a.webp" alt="Художественная гимнастика для детей"><div class="v4-blog-card__copy"><h2>Группы для девочек 3–5 лет</h2><p>Узнайте о формате занятий и запишитесь на бесплатную пробную тренировку.</p></div></a></div></div></section>
 </main>
 
   <footer class="v4-footer">
@@ -360,13 +355,13 @@ html.js [data-hero-anim]{opacity:0;transition-property:opacity,transform;transit
         <img src="/static/assets/d1e3a10e324cb5a3.svg" alt="ELITE" width="145" height="80">
         <p>Художественная гимнастика для детей в одном современном зале.</p>
       </div>
-      <div><h3>КОНТАКТЫ</h3><a href="tel:+74991368180">+7 (499) 136-81-80</a><a href="mailto:pirouette.manager@gmail.com">pirouette.manager@gmail.com</a><span>Москва, точный адрес зала будет добавлен перед публикацией</span></div>
-      <div><h3>НАВИГАЦИЯ</h3><a href="programs.html">Направления</a><a href="team.html">Команда</a><a href="prices.html">Цены</a><a href="blog.html">Статьи</a></div>
-      <div><h3>ПЕРВОЕ ЗАНЯТИЕ</h3><p>Оставьте контакты. Администратор уточнит возраст ребёнка и предложит подходящую группу.</p><button class="v4-btn v4-btn--outline" type="button" data-ref-modal-open>Записаться</button></div>
+      <div><h3>КОНТАКТЫ</h3>{% if phone_href %}<a href="{{ phone_href }}">{{ phone_display }}</a>{% endif %}{% if telegram_url %}<a href="{{ telegram_url }}" rel="noopener" target="_blank">Telegram</a>{% endif %}{% if max_url %}<a href="{{ max_url }}" rel="noopener" target="_blank">MAX</a>{% endif %}<span>{{ site_address }}</span></div>
+      <div><h3>НАВИГАЦИЯ</h3><a href="/#groups">Группы</a><a href="/#about">О клубе</a><a href="/#price">Цены</a><a href="/">Главная</a></div>
+      <div><h3>ПЕРВОЕ ЗАНЯТИЕ</h3><p>Напишите или позвоните. Администратор уточнит возраст ребёнка и предложит подходящую группу.</p><button class="v4-btn v4-btn--outline" type="button" data-ref-modal-open>Связаться</button></div>
     </div>
     <div class="v4-shell v4-footer__bottom">
       <span>© 2026 ELITE</span>
-      <span><a href="privacy.html">Политика конфиденциальности</a> · <a href="consent.html">Согласие на обработку данных</a></span>
+      <span>Москва · Ново-Переделкино</span>
     </div>
   </footer>
 
@@ -376,29 +371,15 @@ html.js [data-hero-anim]{opacity:0;transition-property:opacity,transform;transit
       <button class="ref-modal__close v4-modal__close" type="button" aria-label="Закрыть" data-ref-modal-close>×</button>
       <span class="v4-kicker v4-kicker--pink">ПРОБНОЕ ЗАНЯТИЕ</span>
       <h2 id="v4-modal-title">Подберём группу и время</h2>
-      <p>Оставьте контакты. Администратор уточнит возраст, опыт и удобное время.</p>
-      <form class="club-lead-form" data-lead-form novalidate>
-  <input type="hidden" name="page" value="/article-chto-nuzhno-dlya-hudozhestvennoy-gimnastiki.html">
-  <input type="hidden" name="csrf_token" value="static-preview-token">
-  <input type="text" name="website" tabindex="-1" autocomplete="off" class="club-honeypot" aria-hidden="true">
-  <label>Имя родителя<input name="name" required minlength="2" maxlength="80" autocomplete="name" placeholder="Как к вам обращаться"></label>
-  <label>Телефон<input name="phone" required inputmode="tel" autocomplete="tel" placeholder="+7 999 000-00-00"></label>
-  <div class="club-form-row">
-    <label>Возраст ребёнка<input name="child_age" inputmode="numeric" maxlength="20" placeholder="Например, 5 лет"></label>
-    <label>Направление<select name="program"><option value="">Не выбрано</option><option value="Художественная гимнастика для детей">Художественная гимнастика</option><option value="Развивающая гимнастика">Развивающая гимнастика</option><option value="Персональные тренировки">Персональные тренировки</option><option value="Хореография">Хореография</option><option value="Постановка индивидуальных программ">Постановка программ</option></select></label>
-  </div>
-  <label class="club-consent"><input type="checkbox" name="consent" value="yes" required><span>Я согласен(на) с <a href="consent.html" target="_blank" rel="noopener">обработкой персональных данных</a> и ознакомлен(а) с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a>.</span></label>
-  <button class="ref-pill ref-pill--pink" type="submit">Отправить заявку</button>
-  <small data-form-status></small>
-</form>
+      <p>Напишите в удобный мессенджер или позвоните. Персональные данные на сайте не сохраняются.</p>
+      <div class="club-lead-form">
+        {% if telegram_url %}<a class="v4-btn v4-btn--pink" href="{{ telegram_url }}" rel="noopener" target="_blank">Написать в Telegram</a>{% endif %}
+        {% if max_url %}<a class="v4-btn v4-btn--outline" href="{{ max_url }}" rel="noopener" target="_blank">Написать в MAX</a>{% endif %}
+        {% if phone_href %}<a class="v4-btn v4-btn--outline" href="{{ phone_href }}">Позвонить: {{ phone_display }}</a>{% endif %}
+      </div>
     </div>
   </div>
   <div class="club-toast" data-toast role="status" aria-live="polite"></div>
-
-  <div class="v4-cookie" data-v4-cookie hidden>
-    <p>Мы используем cookie для работы сайта и аналитики. Продолжая пользоваться сайтом, вы соглашаетесь с <a href="privacy.html">политикой конфиденциальности</a>.</p>
-    <button type="button" data-v4-cookie-accept>Принять</button>
-  </div>
 
   
   
@@ -568,60 +549,6 @@ html.js [data-hero-anim]{opacity:0;transition-property:opacity,transform;transit
     utm[name] = current || safeStorage.get(name);
   });
 
-  qsa('[data-lead-form]').forEach((form) => {
-    const status = qs('[data-form-status]', form);
-    const phone = qs('input[name="phone"]', form);
-    phone?.addEventListener('input', () => {
-      phone.value = phone.value.replace(/[^0-9+()\-\s]/g, '').slice(0, 24);
-    });
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        if (status) status.textContent = 'Проверьте обязательные поля.';
-        return;
-      }
-      const submit = qs('button[type="submit"]', form);
-      const data = Object.fromEntries(new FormData(form).entries());
-      Object.assign(data, utm);
-      if (window.location.protocol === 'file:' || window.location.hostname === 'localhost-preview.invalid') {
-        if (status) status.textContent = 'Форма проверена. В автономном preview отправка отключена.';
-        showToast('Интерфейс формы работает; отправка отключена в автономном preview.');
-        return;
-      }
-      if (submit) {
-        submit.disabled = true;
-        submit.dataset.label = submit.textContent;
-        submit.textContent = 'Отправляем…';
-      }
-      try {
-        const response = await fetch('/api/lead', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify(data),
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Не удалось отправить заявку');
-        form.reset();
-        if (status) status.textContent = payload.message || 'Заявка принята.';
-        showToast(payload.message || 'Заявка принята.');
-        window.setTimeout(() => {
-          closeModal();
-          if (payload.redirect) window.location.assign(payload.redirect);
-        }, 650);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Не удалось отправить заявку';
-        if (status) status.textContent = message;
-        showToast(message, true);
-      } finally {
-        if (submit) {
-          submit.disabled = false;
-          submit.textContent = submit.dataset.label || 'Отправить заявку';
-        }
-      }
-    });
-  });
 })();
 
 (() => {

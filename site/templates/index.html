@@ -5,16 +5,22 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <meta content="#fff9fc" name="theme-color"/>
-<title>ELITE — художественная гимнастика для девочек 3–5 лет</title>
-<meta content="Художественная гимнастика ELITE для девочек 3–5 лет. Набор в начальную группу, бесплатное пробное занятие, абонемент 8 000 ₽. Планируем группу 6–10 лет." name="description"/>
+<title>ELITE — художественная гимнастика в Ново-Переделкино</title>
+<meta content="Художественная гимнастика ELITE для девочек 3–5 лет в Ново-Переделкино. Бесплатное пробное занятие. Москва, Боровское шоссе, 43, этаж 3." name="description"/>
 <meta content="{{ robots }}" name="robots"/>
 <link href="{{ canonical_url }}" rel="canonical"/>
+<link href="/static/assets/d1e3a10e324cb5a3.svg" rel="icon" type="image/svg+xml"/>
+<meta content="RU-MOW" name="geo.region"/>
+<meta content="Ново-Переделкино, Москва" name="geo.placename"/>
 <meta content="website" property="og:type"/>
 <meta content="ru_RU" property="og:locale"/>
 <meta content="ELITE" property="og:site_name"/>
-<meta content="ELITE — художественная гимнастика для девочек 3–5 лет" property="og:title"/>
-<meta content="Художественная гимнастика ELITE для девочек 3–5 лет. Набор в начальную группу, бесплатное пробное занятие, абонемент 8 000 ₽. Планируем группу 6–10 лет." property="og:description"/>
+<meta content="ELITE — художественная гимнастика в Ново-Переделкино" property="og:title"/>
+<meta content="Художественная гимнастика для девочек 3–5 лет. Бесплатное пробное занятие по адресу: Москва, Боровское шоссе, 43, этаж 3." property="og:description"/>
+<meta content="{{ canonical_url }}" property="og:url"/>
 <meta content="{{ base_url }}/static/assets/73ac02333674a7a9.webp" property="og:image"/>
+<meta content="Занятие художественной гимнастикой в ELITE" property="og:image:alt"/>
+<meta content="summary_large_image" name="twitter:card"/>
 <script>document.documentElement.classList.add('js')</script>
 <style>
 :root{--ref-pink:#f7278a;--ref-pink2:#ff4fa3;--ref-blue:#29acd3;--ref-purple:#7861df;--ref-dark:#111116;--ref-dark2:#1b1b22;--ref-paper:#fff;--ref-soft:#f4f3f5;--ref-cream:#f4eee6;--ref-line:rgba(17,17,22,.14);--ref-shell:min(1220px,calc(100% - 48px));--ref-radius:26px;--ref-shadow:0 24px 70px rgba(21,19,31,.16)}
@@ -259,8 +265,9 @@
         "description":"\u0425\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u0430\u044f \u0433\u0438\u043c\u043d\u0430\u0441\u0442\u0438\u043a\u0430 \u0434\u043b\u044f \u0434\u0435\u0432\u043e\u0447\u0435\u043a \u043e\u0442 3 \u043b\u0435\u0442",
         "url":"{{ base_url }}/",
         "priceRange":"₽₽",
-        "address":{"@type":"PostalAddress","addressCountry":"RU","addressLocality":"\u041c\u043e\u0441\u043a\u0432\u0430","streetAddress":"[\u0410\u0414\u0420\u0415\u0421 \u0417\u0410\u041b\u0410]"},
-        "sameAs":["https://mypolechka.ru/","https://www.youtube.com/channel/UCONm9-FBKX-27uhrf647ZCQ"]
+        {% if phone_e164 %}"telephone":"{{ phone_e164 }}",{% endif %}
+        "address":{"@type":"PostalAddress","addressCountry":"RU","addressLocality":"Москва","addressRegion":"Ново-Переделкино","streetAddress":"Боровское шоссе, 43, этаж 3"},
+        "sameAs":{{ same_as_json|safe }}
       },
       {
         "@type":"WebSite",
@@ -308,31 +315,32 @@
   .elite-research-note__links{display:grid}
   .elite-gimlandia__title{display:grid;gap:2px}
 }
+.elite-map iframe{width:100%;height:100%;border:0;display:block}
 </style></head>
 <body class="elite-page" data-page="index">
 <a class="club-skip" href="#main-content">Перейти к содержанию</a>
 <header class="elite-header" data-elite-header="">
 <div class="elite-shell elite-header__inner">
-<a aria-label="ELITE — главная" class="elite-brand" href="index.html">
+<a aria-label="ELITE — главная" class="elite-brand" href="/">
 <img alt="" aria-hidden="true" src="/static/assets/2bba3d9fb632ecb5.webp"/>
 <b>ELITE</b>
 </a>
 <nav aria-label="Основная навигация" class="elite-nav">
-<a href="index.html#about">О клубе</a>
-<a href="index.html#interactive">Интерактив</a>
-<a href="index.html#groups">Группы</a>
-<a href="index.html#price">Стоимость</a>
-<a href="index.html#contacts">Контакты</a>
+<a href="#about">О клубе</a>
+<a href="#interactive">Интерактив</a>
+<a href="#groups">Группы</a>
+<a href="#price">Стоимость</a>
+<a href="#contacts">Контакты</a>
 </nav>
 <button class="elite-btn elite-btn--small" data-elite-connect="" data-source="header" type="button">Записаться</button>
 <button aria-expanded="false" aria-label="Открыть меню" class="elite-menu-button" data-elite-menu-button="" type="button"><span></span><span></span></button>
 </div>
 <div class="elite-mobile-menu" data-elite-mobile-menu="" hidden="">
-<a href="index.html#about">О клубе</a>
-<a href="index.html#interactive">Интерактив</a>
-<a href="index.html#groups">Группы</a>
-<a href="index.html#price">Стоимость</a>
-<a href="index.html#contacts">Контакты</a>
+<a href="#about">О клубе</a>
+<a href="#interactive">Интерактив</a>
+<a href="#groups">Группы</a>
+<a href="#price">Стоимость</a>
+<a href="#contacts">Контакты</a>
 <button class="elite-btn" data-elite-connect="" data-source="mobile_menu" type="button">Пробное бесплатно</button>
 </div>
 </header>
@@ -476,8 +484,8 @@
 <section class="elite-article-teaser"><div class="elite-shell elite-article-teaser__grid"><div><span class="elite-eyebrow">СТАТЬЯ НА САЙТЕ</span><h2>Художественная гимнастика с 3 лет: <em>что важно знать родителю</em></h2><p>С неё начинаем контент-экосистему: сайт → Дзен → Telegram/VK → короткие видео → база знаний для будущего бота.</p><a class="elite-btn elite-btn--secondary" href="article-hudozhestvennaya-gimnastika-s-3-let.html">Читать статью</a></div><img alt="Гимнастки с обручами" src="/static/assets/e1229a2e42880456.webp"/></div></section>
 <section class="elite-contact" id="contacts">
 <div class="elite-shell elite-contact__grid">
-<div class="elite-contact__copy"><span class="elite-eyebrow">ДОБРАТЬСЯ</span><h2>ELITE рядом</h2><p class="elite-contact__address">Один зал ELITE</p><p>Точный адрес — в контактах · [СКОЛЬКО МИНУТ ОТ МЕТРО / ОРИЕНТИР]</p><div class="elite-contact__actions"><button class="elite-btn" data-elite-connect="" data-source="contacts" type="button">Связаться</button><a class="elite-btn elite-btn--secondary" data-goal="route_yandex" href="https://yandex.ru/maps/" rel="noopener" target="_blank">Построить маршрут</a></div><small>Напишите нам — пришлём точную геолокацию и удобный маршрут.</small></div>
-<div aria-label="Место для Яндекс Карты" class="elite-map" role="img"><div class="elite-map__pin"></div><b>Яндекс Карта</b><span>Открыть маршрут</span></div>
+<div class="elite-contact__copy"><span class="elite-eyebrow">ДОБРАТЬСЯ</span><h2>ELITE рядом</h2><p class="elite-contact__address">{{ site_address }}</p><p>Один зал ELITE в районе Ново-Переделкино.</p><div class="elite-contact__actions"><button class="elite-btn" data-elite-connect="" data-source="contacts" type="button">Связаться</button><a class="elite-btn elite-btn--secondary" data-goal="route_yandex" href="{{ yandex_route_url }}" rel="noopener" target="_blank">Построить маршрут</a></div><small>Зал находится на 3 этаже. Маршрут откроется в Яндекс Картах.</small></div>
+<div class="elite-map"><iframe allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="{{ yandex_map_embed_url }}" title="ELITE на Яндекс Картах — {{ site_address }}"></iframe></div>
 </div>
 </section>
 <section class="elite-final"><img alt="" aria-hidden="true" src="/static/assets/17c15c35866f4e1a.webp"/><div class="elite-shell"><span class="elite-eyebrow elite-eyebrow--light">НАБОР 3–5 ЛЕТ ОТКРЫТ</span><h2>Первое занятие — <em>бесплатно</em></h2><p>Напишите в Telegram или MAX — либо оставьте номер, и мы свяжемся с вами.</p><button class="elite-btn elite-btn--light" data-elite-connect="" data-source="final" type="button">Записаться в ELITE</button></div></section>
@@ -485,8 +493,8 @@
 <footer class="elite-footer">
 <div class="elite-shell elite-footer__grid">
 <div><div class="elite-footer__brand">ELITE</div><p>Художественная гимнастика для девочек от 3 лет.</p></div>
-<div><b>Связаться</b><button data-elite-connect="" data-source="footer" type="button">Записаться на бесплатное пробное</button><a href="https://mypolechka.ru/" rel="noopener" target="_blank">Гимнастка Полечка</a></div>
-<div><b>Полезное</b><a href="article-hudozhestvennaya-gimnastika-s-3-let.html">Как проходит первое занятие</a><a href="privacy.html">Политика конфиденциальности</a></div>
+<div><b>Связаться</b><button data-elite-connect="" data-source="footer" type="button">Записаться на бесплатное пробное</button>{% if phone_href %}<a href="{{ phone_href }}">{{ phone_display }}</a>{% endif %}{% if telegram_url %}<a href="{{ telegram_url }}" rel="noopener" target="_blank">Telegram</a>{% endif %}{% if max_url %}<a href="{{ max_url }}" rel="noopener" target="_blank">MAX</a>{% endif %}</div>
+<div><b>Полезное</b><a href="/article/hudozhestvennaya-gimnastika-s-3-let">Как проходит первое занятие</a><a href="#contacts">Адрес зала</a></div>
 </div>
 <div class="elite-shell elite-footer__bottom"><span>© 2026 ELITE</span><span>Художественная гимнастика для девочек от 3 лет</span></div>
 </footer>
@@ -496,23 +504,12 @@
 <button aria-label="Закрыть" class="elite-connect__close" data-elite-connect-close="" type="button">×</button>
 <span class="elite-eyebrow">ПРОБНОЕ — 0 ₽</span>
 <h2 id="elite-connect-title">Как удобнее связаться?</h2>
-<p>Самый быстрый способ — написать нам в Telegram или MAX. Можно также оставить номер телефона.</p>
+<p>Напишите нам в Telegram или MAX — либо позвоните. Мы уточним возраст ребёнка и удобное время.</p>
 <div class="elite-connect__messengers">
-<a class="elite-messenger elite-messenger--tg" data-contact-channel="telegram" data-goal="telegram_click" href="#lead-form"><b>Telegram</b><span>Открыть диалог</span></a>
-<a class="elite-messenger elite-messenger--max" data-contact-channel="max" data-goal="max_click" href="#lead-form"><b>MAX</b><span>Написать в MAX</span></a>
+{% if telegram_url %}<a class="elite-messenger elite-messenger--tg" data-contact-channel="telegram" data-goal="telegram_click" href="{{ telegram_url }}" rel="noopener" target="_blank"><b>Telegram</b><span>Открыть диалог</span></a>{% endif %}
+{% if max_url %}<a class="elite-messenger elite-messenger--max" data-contact-channel="max" data-goal="max_click" href="{{ max_url }}" rel="noopener" target="_blank"><b>MAX</b><span>Написать в MAX</span></a>{% endif %}
 </div>
-<div class="elite-connect__or"><span>или</span></div>
-<form action="/api/lead" class="elite-lead-form" data-lead-form="" id="lead-form" method="post">
-<input name="csrf_token" type="hidden" value="static-preview-token"/>
-<input data-lead-program="" name="program" type="hidden" value="Начальная группа 3–5 лет"/>
-<input name="page" type="hidden" value="/index.html"/>
-<input aria-hidden="true" autocomplete="off" class="club-honeypot" name="website" tabindex="-1" type="text"/>
-<label><span>Телефон</span><input autocomplete="tel" inputmode="tel" name="phone" placeholder="+7 999 000-00-00" required="" type="tel"/></label>
-<label><span>Имя <small>необязательно</small></span><input autocomplete="name" name="name" placeholder="Как к вам обращаться" type="text"/></label>
-<label class="elite-consent"><input name="consent" required="" type="checkbox" value="yes"/><span>Согласен(на) на обработку персональных данных</span></label>
-<button class="elite-btn elite-btn--full" type="submit">Перезвоните мне</button>
-<p aria-live="polite" class="elite-form-status" data-form-status="" role="status"></p>
-</form>
+{% if phone_href %}<div class="elite-connect__or"><span>или</span></div><a class="elite-btn elite-btn--full" data-goal="phone_click" href="{{ phone_href }}">Позвонить: {{ phone_display }}</a>{% endif %}
 </section>
 </div>
 <button class="elite-mobile-cta" data-elite-connect="" data-source="mobile_sticky" type="button"><span>Пробное бесплатно</span><b>Записаться</b></button>
@@ -683,60 +680,6 @@
     utm[name] = current || safeStorage.get(name);
   });
 
-  qsa('[data-lead-form]').forEach((form) => {
-    const status = qs('[data-form-status]', form);
-    const phone = qs('input[name="phone"]', form);
-    phone?.addEventListener('input', () => {
-      phone.value = phone.value.replace(/[^0-9+()\-\s]/g, '').slice(0, 24);
-    });
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        if (status) status.textContent = 'Проверьте обязательные поля.';
-        return;
-      }
-      const submit = qs('button[type="submit"]', form);
-      const data = Object.fromEntries(new FormData(form).entries());
-      Object.assign(data, utm);
-      if (window.location.protocol === 'file:' || window.location.hostname === 'localhost-preview.invalid') {
-        if (status) status.textContent = 'Форма проверена. В автономном preview отправка отключена.';
-        showToast('Интерфейс формы работает; отправка отключена в автономном preview.');
-        return;
-      }
-      if (submit) {
-        submit.disabled = true;
-        submit.dataset.label = submit.textContent;
-        submit.textContent = 'Отправляем…';
-      }
-      try {
-        const response = await fetch('/api/lead', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify(data),
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Не удалось отправить заявку');
-        form.reset();
-        if (status) status.textContent = payload.message || 'Заявка принята.';
-        showToast(payload.message || 'Заявка принята.');
-        window.setTimeout(() => {
-          closeModal();
-          if (payload.redirect) window.location.assign(payload.redirect);
-        }, 650);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Не удалось отправить заявку';
-        if (status) status.textContent = message;
-        showToast(message, true);
-      } finally {
-        if (submit) {
-          submit.disabled = false;
-          submit.textContent = submit.dataset.label || 'Отправить заявку';
-        }
-      }
-    });
-  });
 })();
 
 </script>

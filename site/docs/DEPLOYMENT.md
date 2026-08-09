@@ -14,3 +14,23 @@ Agent must first ask user for: real domain, public VPS IPv4, and whether DNS is 
 10. Verify desktop 1440 and mobile 390, no horizontal overflow, JS errors, health endpoint, SSL chain.
 
 Rollback minimum: record current commit SHA before update; `git reset --hard <known-good-sha>`, reinstall requirements if changed, restart service, run healthcheck.
+
+## Production update
+
+The server materializes only `site/`. From the key-only `eliteops` account:
+
+```bash
+sudo /usr/local/sbin/elite-update
+```
+
+The updater fetches `origin/sitest`, records the previous SHA, compiles Python, installs requirements, validates Nginx, restarts the service, and checks `/healthz`. A failed update automatically restores the previous checkout and runtime configuration.
+
+Manual rollback to the last recorded SHA:
+
+```bash
+sudo /usr/local/sbin/elite-rollback
+```
+
+An explicit known-good SHA may be supplied as the single argument. Contact URLs, phone, address, and indexing state live in `/etc/elite/elite.env` and are not hardcoded as deployment secrets. Keep `SITE_INDEXABLE=false` until HTTPS and production QA pass.
+
+The contact map uses the official Yandex Maps iframe widget with an address search URL. It does not require or commit an API key. Lead forms are intentionally disabled until personal-data handling and a CRM/webhook are reviewed; production CTAs use direct Telegram, MAX, and phone links.
