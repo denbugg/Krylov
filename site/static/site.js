@@ -2,10 +2,19 @@
   const hero=document.querySelector('.hero'), sticky=document.querySelector('[data-sticky]'), sheet=document.querySelector('[data-sheet]'), form=document.querySelector('#lead-form');
   let source='unknown';
   const telegramUrl=(document.body.dataset.telegramUrl||'').trim();
+  const telegramForSource=(src)=>{
+    if(!telegramUrl)return '';
+    try{
+      const u=new URL(telegramUrl);
+      if(u.hostname==='t.me'&&u.searchParams.has('start'))u.searchParams.set('start',(src||'site').slice(0,64).replace(/[^A-Za-z0-9_-]/g,'_'));
+      return u.toString();
+    }catch(_){return telegramUrl}
+  };
   if(hero&&sticky){new IntersectionObserver(([e])=>sticky.classList.toggle('is-visible',!e.isIntersecting),{threshold:.12}).observe(hero)}
   document.querySelectorAll('[data-telegram]').forEach(btn=>btn.addEventListener('click',()=>{
-    source=btn.dataset.source||'unknown';
-    if(telegramUrl){window.location.href=telegramUrl;return}
+    source=btn.dataset.source||'site';
+    const href=telegramForSource(source);
+    if(href){window.location.href=href;return}
     sheet?.classList.add('open');sheet?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(form?.source)form.source.value=source;
   }));
   document.querySelectorAll('[data-connect]').forEach(btn=>btn.addEventListener('click',()=>{source=btn.dataset.source||'unknown';sheet?.classList.add('open');sheet?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(form?.source)form.source.value=source}));
