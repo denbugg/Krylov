@@ -66,7 +66,13 @@ def _site_context(path: str = "") -> dict[str, str]:
     canonical_url = f"{base_url}/{path.lstrip('/')}" if path else f"{base_url}/"
     address = os.getenv("SITE_ADDRESS", "Москва, Боровское шоссе, 43, этаж 3").strip()
     map_query = os.getenv("SITE_MAP_QUERY", "Москва, Боровское шоссе, 43").strip()
-    telegram_url = os.getenv("SITE_TELEGRAM_URL", "https://t.me/Undina_007").strip()
+    telegram_bot_username = os.getenv("TELEGRAM_BOT_USERNAME", "").strip().lstrip("@").replace(" ", "")
+    telegram_direct_url = os.getenv("SITE_TELEGRAM_URL", "https://t.me/Undina_007").strip()
+    telegram_url = (
+        f"https://t.me/{telegram_bot_username}?start=site"
+        if telegram_bot_username
+        else telegram_direct_url
+    )
     max_url = os.getenv("SITE_MAX_URL", "").strip()
     phone_display = os.getenv("SITE_PHONE_DISPLAY", "+7 (916) 965-35-13").strip()
     phone_e164 = os.getenv("SITE_PHONE_E164", "+79169653513").strip()
@@ -86,6 +92,7 @@ def _site_context(path: str = "") -> dict[str, str]:
         "robots": "index,follow" if indexable else "noindex,nofollow,noarchive",
         "site_address": address,
         "telegram_url": telegram_url,
+        "telegram_bot_username": telegram_bot_username,
         "max_url": max_url,
         "phone_display": phone_display,
         "phone_e164": phone_e164,
@@ -168,7 +175,10 @@ def admin_leads():
     supplied = request.headers.get("Authorization", "")
     if not expected or supplied != f"Bearer {expected}":
         return jsonify({"error": "unauthorized"}), 401
-    limit = min(max(int(request.args.get("limit", 50)), 1), 200)
+    try:
+        limit = min(max(int(request.args.get("limit", 50)), 1), 200)
+    except ValueError:
+        limit = 50
     conn = _db()
     rows = conn.execute(
         "SELECT id, created_at, name, phone, source, page, preferred_channel, status FROM leads ORDER BY id DESC LIMIT ?",
