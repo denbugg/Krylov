@@ -16,23 +16,21 @@ Messenger is the preferred lead path because it removes repeated manual identity
 - Bot and website share SQLite lead storage at `/var/lib/elite/leads.sqlite3` but run as separate systemd processes.
 
 ## Required server-only environment
-Store only in `/etc/elite/elite.env`, never Git:
-
-```text
-TELEGRAM_BOT_TOKEN=<BotFather token>
-TELEGRAM_BOT_USERNAME=<bot username without @>
-TELEGRAM_ADMIN_USERNAME=Undina_007
-TELEGRAM_ADMIN_CHAT_ID=
-```
-
-When `TELEGRAM_BOT_USERNAME` is populated, the website automatically prefers `https://t.me/<bot>?start=...` over the direct administrator Telegram URL.
+Secrets stay in `/etc/elite/elite.env`, never Git. The deployment installs a safe interactive helper, so manual file editing is unnecessary.
 
 ## Telegram activation
-1. Create a dedicated ELITE bot in `@BotFather` and obtain username/token.
-2. Put username/token directly into `/etc/elite/elite.env` on the VPS.
-3. Run `sudo /usr/local/sbin/elite-update` (or restart `elite` and enable/restart `elite-bot`).
+1. Create a dedicated ELITE bot in `@BotFather` and obtain its username/token.
+2. On the VPS run:
+
+```bash
+sudo /usr/local/sbin/elite-configure-telegram
+```
+
+3. Enter the bot username. Paste the BotFather token at the hidden prompt. The helper validates it against Telegram, writes it to `/etc/elite/elite.env` with restrictive permissions, generates a private admin API token if needed, enables/restarts `elite-bot`, restarts the website, and checks `/healthz`.
 4. From `@Undina_007`, open the bot and send `/admin` once.
 5. Test site CTA → `/start` → native contact button → DB lead → admin notification → admin Reply → parent response.
+
+When `TELEGRAM_BOT_USERNAME` is configured, the website automatically routes its primary CTAs to `https://t.me/<bot>?start=<source>` instead of the direct administrator Telegram URL.
 
 ## MAX MVP
 Build the same UX once official MAX bot credentials/API are available: identity from messenger where supported, one-tap contact/data consent where supported, age/time shortcuts, admin handoff, shared lead schema. Do not invent API behavior: verify against current official MAX documentation before implementation.

@@ -72,6 +72,7 @@ install -m 0644 /srv/elite/site/deploy/elite-autodeploy.service /etc/systemd/sys
 install -m 0644 /srv/elite/site/deploy/elite-autodeploy.timer /etc/systemd/system/elite-autodeploy.timer
 install -m 0755 /srv/elite/site/deploy/update.sh /usr/local/sbin/elite-update
 install -m 0755 /srv/elite/site/deploy/rollback.sh /usr/local/sbin/elite-rollback
+install -m 0755 /srv/elite/site/deploy/configure-telegram.sh /usr/local/sbin/elite-configure-telegram
 
 systemctl daemon-reload
 systemctl enable --now elite

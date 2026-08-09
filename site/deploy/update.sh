@@ -23,6 +23,9 @@ install_runtime_units() {
   chmod 0750 "$STATE_DIR"
   install -m 0755 "$SITE/deploy/update.sh" /usr/local/sbin/elite-update
   install -m 0755 "$SITE/deploy/rollback.sh" /usr/local/sbin/elite-rollback
+  if [ -f "$SITE/deploy/configure-telegram.sh" ]; then
+    install -m 0755 "$SITE/deploy/configure-telegram.sh" /usr/local/sbin/elite-configure-telegram
+  fi
   install -m 0644 "$SITE/deploy/elite.service" /etc/systemd/system/elite.service
   if [ -f "$SITE/deploy/elite-bot.service" ]; then
     install -m 0644 "$SITE/deploy/elite-bot.service" /etc/systemd/system/elite-bot.service
