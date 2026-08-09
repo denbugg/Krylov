@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll GitHub for ELITE site updates
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+RandomizedDelaySec=20s
+Persistent=true
+Unit=elite-autodeploy.service
+
+[Install]
+WantedBy=timers.target
