@@ -2,9 +2,11 @@
 set -euo pipefail
 
 # Run as root on Ubuntu 24.04.
-# Required env: DOMAIN. Optional: GIT_REPO_SSH.
+# Required env: DOMAIN. Optional: GIT_REPO_SSH, SITE_ENV, SITE_INDEXABLE.
 : "${DOMAIN:?set DOMAIN}"
-: "${GIT_REPO_SSH:=git@github.com:denbugg/Krylov.git}"
+: "${GIT_REPO_SSH:=https://github.com/denbugg/Krylov.git}"
+: "${SITE_ENV:=staging}"
+: "${SITE_INDEXABLE:=false}"
 
 apt-get update
 apt-get install -y git nginx python3-venv python3-pip ufw curl
@@ -26,9 +28,10 @@ python3 -m venv /srv/elite/venv
 /srv/elite/venv/bin/pip install -r /srv/elite/site/requirements.txt
 
 cat >/etc/elite/elite.env <<EOF
-SITE_ENV=production
+SITE_ENV=$SITE_ENV
 SITE_DOMAIN=$DOMAIN
 SITE_SCHEME=https
+SITE_INDEXABLE=$SITE_INDEXABLE
 PORT=8000
 EOF
 chmod 600 /etc/elite/elite.env

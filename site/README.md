@@ -20,4 +20,4 @@ Open `http://127.0.0.1:8000/`. Health endpoint: `/healthz`.
 Use `docs/BOOTSTRAP_AGENT_PROMPT.md` as the initial instruction and require the agent to read `AGENTS.md` plus `docs/*` first.
 
 ## Production
-See `docs/DEPLOYMENT.md`. Production indexing remains gated until the real domain, HTTPS, address, and contacts pass production QA.
+See `docs/DEPLOYMENT.md`. Production indexing remains gated by `SITE_INDEXABLE=false` until the real domain, HTTPS, address, and contacts pass production QA.
