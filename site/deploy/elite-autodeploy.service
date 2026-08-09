@@ -1,0 +1,11 @@
+[Unit]
+Description=Check and deploy latest ELITE sitest revision
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/elite-update
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
