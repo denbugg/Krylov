@@ -44,7 +44,11 @@ deploy() {
 
   domain="$(sed -n 's/^SITE_DOMAIN=//p' /etc/elite/elite.env | tail -n 1)"
   [ -n "$domain" ] || return 1
-  sed "s/__DOMAIN__/$domain/g" "$SITE/deploy/nginx.conf.template" >"$TMP_DIR/nginx.new"
+  nginx_template="$SITE/deploy/nginx.conf.template"
+  if [ -f "/etc/letsencrypt/live/$domain/fullchain.pem" ]; then
+    nginx_template="$SITE/deploy/nginx.https.conf.template"
+  fi
+  sed "s/__DOMAIN__/$domain/g" "$nginx_template" >"$TMP_DIR/nginx.new"
   install -m 0644 "$TMP_DIR/nginx.new" /etc/nginx/sites-available/elite
   install -m 0644 "$SITE/deploy/elite.service" /etc/systemd/system/elite.service
   systemctl daemon-reload || return 1

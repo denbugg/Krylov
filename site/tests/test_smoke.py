@@ -32,10 +32,16 @@ class SiteSmokeTest(unittest.TestCase):
         for path in ("/", "/article/hudozhestvennaya-gimnastika-s-3-let"):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                response.headers["X-Robots-Tag"], "noindex, nofollow, noarchive"
+            )
             html = response.get_data(as_text=True)
             self.assertIn('content="noindex,nofollow,noarchive"', html)
             self.assertNotIn("[АДРЕС", html)
             self.assertNotIn("точный адрес зала будет добавлен", html)
+            self.assertNotIn("Здесь будет ваше", html)
+            self.assertNotIn("Для рекламного лендинга", html)
+            self.assertNotIn("контент-экосистему", html)
             for payload in re.findall(
                 r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.S
             ):
@@ -75,6 +81,24 @@ class SiteSmokeTest(unittest.TestCase):
         self.assertIn("Disallow: /", self.client.get("/robots.txt").get_data(as_text=True))
         sitemap = self.client.get("/sitemap.xml").get_data(as_text=True)
         self.assertIn("https://rgelite.ru/", sitemap)
+
+        old_environment = os.environ["SITE_ENV"]
+        old_indexable = os.environ["SITE_INDEXABLE"]
+        try:
+            os.environ["SITE_ENV"] = "production"
+            os.environ["SITE_INDEXABLE"] = "true"
+            self.assertIn(
+                'content="index,follow"',
+                self.client.get("/article/hudozhestvennaya-gimnastika-s-3-let").get_data(
+                    as_text=True
+                ),
+            )
+            robots = self.client.get("/robots.txt").get_data(as_text=True)
+            self.assertIn("Allow: /", robots)
+            self.assertIn("Sitemap: https://rgelite.ru/sitemap.xml", robots)
+        finally:
+            os.environ["SITE_ENV"] = old_environment
+            os.environ["SITE_INDEXABLE"] = old_indexable
 
     def test_legacy_redirects(self) -> None:
         expected = {

@@ -266,7 +266,7 @@
         "url":"{{ base_url }}/",
         "priceRange":"₽₽",
         {% if phone_e164 %}"telephone":"{{ phone_e164 }}",{% endif %}
-        "address":{"@type":"PostalAddress","addressCountry":"RU","addressLocality":"Москва","addressRegion":"Ново-Переделкино","streetAddress":"Боровское шоссе, 43, этаж 3"},
+        "address":{"@type":"PostalAddress","addressCountry":"RU","addressLocality":"Москва","streetAddress":"Боровское шоссе, 43, этаж 3"},
         "sameAs":{{ same_as_json|safe }}
       },
       {
@@ -315,7 +315,7 @@
   .elite-research-note__links{display:grid}
   .elite-gimlandia__title{display:grid;gap:2px}
 }
-.elite-map iframe{width:100%;height:100%;border:0;display:block}
+.elite-map:before,.elite-map:after{display:none}.elite-map iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
 </style></head>
 <body class="elite-page" data-page="index">
 <a class="club-skip" href="#main-content">Перейти к содержанию</a>
@@ -350,7 +350,7 @@
 <div aria-hidden="true" class="elite-cinematic__video">
 <img alt="" src="/static/assets/0fa609eacbe41fdf.webp"/>
 <div class="elite-cinematic__video-shade"></div>
-<div class="elite-cinematic__video-label"><span>ELITE В ДВИЖЕНИИ</span><b>Здесь будет ваше тренировочное видео</b></div>
+<div class="elite-cinematic__video-label"><span>ELITE В ДВИЖЕНИИ</span><b>Знакомство с художественной гимнастикой</b></div>
 </div>
 <section class="elite-hero" data-elite-hero="">
 <img alt="" aria-hidden="true" class="elite-hero__identity" src="/static/assets/e3a99a7b06498d0c.webp"/>
@@ -449,11 +449,10 @@
 <button class="elite-btn" data-elite-connect="" data-program="Начальная группа 3–5 лет" data-source="trial_3_5" type="button">Записаться бесплатно</button>
 </article>
 <article class="elite-group-card" data-elite-reveal="">
-<span class="elite-group-card__status">Планируем группу</span><div class="elite-group-card__age">6–10 лет</div><h3>Художественная гимнастика</h3><p>Собираем предварительный интерес. Оставьте контакт — сообщим, когда откроется набор.</p>
+<span class="elite-group-card__status">Планируем группу</span><div class="elite-group-card__age">6–10 лет</div><h3>Художественная гимнастика</h3><p>Собираем предварительный интерес. Напишите нам — сообщим, когда откроется набор.</p>
 <button class="elite-btn elite-btn--secondary" data-elite-connect="" data-program="Художественная гимнастика 6–10 лет" data-source="waitlist_6_10" type="button">Узнать о наборе</button>
 </article>
 </div>
-<div class="elite-future"><b>Дальше хотим развивать:</b><span>Развивающая гимнастика</span><span>Персональные занятия</span><span>Хореография</span><span>Балетная подготовка</span></div>
 </div>
 </section>
 <section class="elite-journey">
@@ -464,7 +463,7 @@
 </section>
 <section class="elite-life">
 <div class="elite-shell">
-<div class="elite-section-head elite-section-head--split"><div><span class="elite-eyebrow">ELITE В ЖИЗНИ</span><h2>Не фотобанк.<br/><em>Настоящая гимнастика.</em></h2></div><p>Для рекламного лендинга оставляем только сильные доказательные кадры: ребёнок, тренировка, выступление, атмосфера.</p></div>
+<div class="elite-section-head elite-section-head--split"><div><span class="elite-eyebrow">ELITE В ЖИЗНИ</span><h2>Не фотобанк.<br/><em>Настоящая гимнастика.</em></h2></div><p>Тренировки, выступления и атмосфера клуба — в живых кадрах наших гимнасток.</p></div>
 <div class="elite-life__grid">
 <figure class="elite-life__big"><img alt="Тренировочный процесс" src="/static/assets/021f0aa59e7dcab1.webp"/></figure>
 <figure><img alt="Выступление гимнастки" src="/static/assets/5667824fc4271418.webp"/></figure>
@@ -481,14 +480,14 @@
 </div>
 </section>
 <section class="elite-faq" id="faq"><div class="elite-shell"><div class="elite-section-head elite-section-head--split"><div><span class="elite-eyebrow">FAQ</span><h2>Что обычно спрашивают <em>до первого занятия</em></h2></div><a href="article-hudozhestvennaya-gimnastika-s-3-let.html">Подробный гид для родителей →</a></div><div class="elite-faq__list" data-elite-accordion=""><article><button aria-expanded="false" type="button"><span>Нужна ли подготовка, чтобы прийти в 3–5 лет?</span><i>+</i></button><div><p>Нет. Начальная группа рассчитана на первое знакомство с гимнастикой. Важны интерес ребёнка и отсутствие противопоказаний к физической нагрузке.</p></div></article><article><button aria-expanded="false" type="button"><span>Сколько стоит пробное занятие?</span><i>+</i></button><div><p>Пробное занятие в ELITE бесплатное.</p></div></article><article><button aria-expanded="false" type="button"><span>Сколько стоит абонемент?</span><i>+</i></button><div><p>Абонемент стоит 8 000 ₽ в месяц. Расписание начальной группы можно уточнить при записи.</p></div></article><article><button aria-expanded="false" type="button"><span>Есть ли группа для девочек 6–10 лет?</span><i>+</i></button><div><p>Сейчас основной набор идёт в начальную группу 3–5 лет. Для 6–10 лет мы собираем предварительные заявки на планируемую группу.</p></div></article><article><button aria-expanded="false" type="button"><span>Что такое «Интерактив»?</span><i>+</i></button><div><p>Это домашнее продолжение клубной среды вокруг проекта «Гимнастка Полечка»: мультфильмы, зарядка, упражнения и другие материалы, которые помогают ребёнку не терять интерес к гимнастике между занятиями.</p></div></article><article><button aria-expanded="false" type="button"><span>Обязательно ли потом участвовать в соревнованиях?</span><i>+</i></button><div><p>Нет. На старте задача — познакомить ребёнка с гимнастикой и понять, насколько ему подходит формат. Дальнейшая спортивная траектория обсуждается отдельно.</p></div></article></div></div></section>
-<section class="elite-article-teaser"><div class="elite-shell elite-article-teaser__grid"><div><span class="elite-eyebrow">СТАТЬЯ НА САЙТЕ</span><h2>Художественная гимнастика с 3 лет: <em>что важно знать родителю</em></h2><p>С неё начинаем контент-экосистему: сайт → Дзен → Telegram/VK → короткие видео → база знаний для будущего бота.</p><a class="elite-btn elite-btn--secondary" href="article-hudozhestvennaya-gimnastika-s-3-let.html">Читать статью</a></div><img alt="Гимнастки с обручами" src="/static/assets/e1229a2e42880456.webp"/></div></section>
+<section class="elite-article-teaser"><div class="elite-shell elite-article-teaser__grid"><div><span class="elite-eyebrow">ГИД ДЛЯ РОДИТЕЛЕЙ</span><h2>Художественная гимнастика с 3 лет: <em>что важно знать родителю</em></h2><p>Что взять на первое занятие, когда покупать форму и предметы и как подготовить ребёнка без лишнего напряжения.</p><a class="elite-btn elite-btn--secondary" href="/article/hudozhestvennaya-gimnastika-s-3-let">Читать статью</a></div><img alt="Гимнастки с обручами" src="/static/assets/e1229a2e42880456.webp"/></div></section>
 <section class="elite-contact" id="contacts">
 <div class="elite-shell elite-contact__grid">
 <div class="elite-contact__copy"><span class="elite-eyebrow">ДОБРАТЬСЯ</span><h2>ELITE рядом</h2><p class="elite-contact__address">{{ site_address }}</p><p>Один зал ELITE в районе Ново-Переделкино.</p><div class="elite-contact__actions"><button class="elite-btn" data-elite-connect="" data-source="contacts" type="button">Связаться</button><a class="elite-btn elite-btn--secondary" data-goal="route_yandex" href="{{ yandex_route_url }}" rel="noopener" target="_blank">Построить маршрут</a></div><small>Зал находится на 3 этаже. Маршрут откроется в Яндекс Картах.</small></div>
 <div class="elite-map"><iframe allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="{{ yandex_map_embed_url }}" title="ELITE на Яндекс Картах — {{ site_address }}"></iframe></div>
 </div>
 </section>
-<section class="elite-final"><img alt="" aria-hidden="true" src="/static/assets/17c15c35866f4e1a.webp"/><div class="elite-shell"><span class="elite-eyebrow elite-eyebrow--light">НАБОР 3–5 ЛЕТ ОТКРЫТ</span><h2>Первое занятие — <em>бесплатно</em></h2><p>Напишите в Telegram или MAX — либо оставьте номер, и мы свяжемся с вами.</p><button class="elite-btn elite-btn--light" data-elite-connect="" data-source="final" type="button">Записаться в ELITE</button></div></section>
+<section class="elite-final"><img alt="" aria-hidden="true" src="/static/assets/17c15c35866f4e1a.webp"/><div class="elite-shell"><span class="elite-eyebrow elite-eyebrow--light">НАБОР 3–5 ЛЕТ ОТКРЫТ</span><h2>Первое занятие — <em>бесплатно</em></h2><p>Напишите в Telegram или MAX — либо позвоните нам.</p><button class="elite-btn elite-btn--light" data-elite-connect="" data-source="final" type="button">Записаться в ELITE</button></div></section>
 </main>
 <footer class="elite-footer">
 <div class="elite-shell elite-footer__grid">

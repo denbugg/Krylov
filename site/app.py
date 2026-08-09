@@ -9,6 +9,13 @@ from flask import Flask, Response, redirect, render_template
 app = Flask(__name__)
 
 
+@app.after_request
+def add_crawl_header(response: Response) -> Response:
+    if _site_context()["robots"] != "index,follow":
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    return response
+
+
 def _site_context(path: str = "") -> dict[str, str]:
     domain = os.getenv("SITE_DOMAIN", "").strip().rstrip("/")
     scheme = os.getenv("SITE_SCHEME", "https").strip() or "https"
@@ -17,6 +24,7 @@ def _site_context(path: str = "") -> dict[str, str]:
     base_url = f"{scheme}://{domain}" if domain else "http://localhost:8000"
     canonical_url = f"{base_url}/{path.lstrip('/')}" if path else f"{base_url}/"
     address = os.getenv("SITE_ADDRESS", "Москва, Боровское шоссе, 43, этаж 3").strip()
+    map_query = os.getenv("SITE_MAP_QUERY", "Москва, Боровское шоссе, 43").strip()
     telegram_url = os.getenv("SITE_TELEGRAM_URL", "").strip()
     max_url = os.getenv("SITE_MAX_URL", "").strip()
     phone_display = os.getenv("SITE_PHONE_DISPLAY", "").strip()
@@ -43,10 +51,10 @@ def _site_context(path: str = "") -> dict[str, str]:
         "phone_href": f"tel:{phone_e164}" if phone_e164 else "",
         "same_as_json": json.dumps(social_links, ensure_ascii=False),
         "yandex_map_embed_url": (
-            "https://yandex.ru/map-widget/v1/?mode=search&z=16&text=" + quote(address)
+            "https://yandex.ru/map-widget/v1/?mode=search&z=16&text=" + quote(map_query)
         ),
         "yandex_route_url": (
-            "https://yandex.ru/maps/?mode=search&text=" + quote(address)
+            "https://yandex.ru/maps/?mode=search&text=" + quote(map_query)
         ),
     }
 
