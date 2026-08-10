@@ -7,14 +7,15 @@ if [ "${EUID}" -ne 0 ]; then
 fi
 
 ENV_FILE=/etc/elite/elite.env
-VENV_PY=/srv/elite/venv/bin/python
+CURRENT=/srv/elite/current
+VENV_PY="$CURRENT/venv/bin/python"
 
 if [ ! -f "$ENV_FILE" ]; then
   echo "Missing $ENV_FILE. Deploy the site first." >&2
   exit 1
 fi
 if [ ! -x "$VENV_PY" ]; then
-  echo "Missing ELITE virtualenv. Deploy the site first." >&2
+  echo "Missing current ELITE release. Deploy the site first." >&2
   exit 1
 fi
 
@@ -33,7 +34,6 @@ if [ -z "$BOT_TOKEN" ]; then
   exit 1
 fi
 
-# Validate the secret without printing it.
 TELEGRAM_BOT_TOKEN="$BOT_TOKEN" "$VENV_PY" - <<'PY'
 import json
 import os
@@ -81,7 +81,6 @@ set_env TELEGRAM_BOT_TOKEN "$BOT_TOKEN"
 set_env TELEGRAM_BOT_USERNAME "$BOT_USERNAME"
 set_env TELEGRAM_ADMIN_USERNAME "Undina_007"
 
-# Generate a private admin API token once if it does not yet exist.
 CURRENT_ADMIN_TOKEN="$(sed -n 's/^ADMIN_TOKEN=//p' "$ENV_FILE" | tail -n 1)"
 if [ -z "$CURRENT_ADMIN_TOKEN" ]; then
   GENERATED_ADMIN_TOKEN="$($VENV_PY - <<'PY'
