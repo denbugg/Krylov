@@ -18,6 +18,12 @@ class DeploySafetyTests(unittest.TestCase):
             self.assertIn("error_page 502 503 504 /fallback/index.html;", text)
             self.assertIn("root /srv/elite;", text)
 
+    def test_nginx_https_uses_current_http2_syntax(self):
+        text = self.read("nginx.https.conf.template")
+        self.assertNotIn("listen 443 ssl http2;", text)
+        self.assertNotIn("listen [::]:443 ssl http2;", text)
+        self.assertEqual(text.count("http2 on;"), 2)
+
     def test_runtime_uses_atomic_current_release(self):
         site_service = self.read("elite.service")
         bot_service = self.read("elite-bot.service")
