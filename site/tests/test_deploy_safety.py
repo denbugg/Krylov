@@ -14,8 +14,8 @@ class DeploySafetyTests(unittest.TestCase):
         for name in ("nginx.conf.template", "nginx.https.conf.template"):
             text = self.read(name)
             self.assertIn("proxy_intercept_errors on;", text)
-            self.assertIn("error_page 502 503 504 /__elite_fallback.html;", text)
-            self.assertIn("/srv/elite/fallback", text)
+            self.assertIn("error_page 502 503 504 /fallback/index.html;", text)
+            self.assertIn("root /srv/elite;", text)
 
     def test_runtime_uses_atomic_current_release(self):
         site_service = self.read("elite.service")
