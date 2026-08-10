@@ -30,8 +30,18 @@ class DeploySafetyTests(unittest.TestCase):
         self.assertIn("CANDIDATE_PORT=18000", text)
         self.assertIn("Running security/regression tests against candidate", text)
         self.assertIn("Starting isolated candidate smoke test", text)
+        self.assertIn("touch \"$release/.prepared\"", text)
         self.assertIn("atomic_link \"$RELEASE\" \"$CURRENT\"", text)
         self.assertIn("restore_old_release", text)
+
+    def test_atomic_link_helpers_are_nounset_safe(self):
+        unsafe = 'local target="$1" link="$2" tmp="${link}.new"'
+        for name in ("update.sh", "rollback.sh"):
+            text = self.read(name)
+            self.assertNotIn(unsafe, text, name)
+            self.assertIn('local target="$1"', text, name)
+            self.assertIn('local link="$2"', text, name)
+            self.assertIn('local tmp="${link}.new"', text, name)
 
     def test_watchdog_and_backup_are_present(self):
         self.assertTrue((DEPLOY / "watchdog.sh").is_file())
