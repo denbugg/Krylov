@@ -1,0 +1,12 @@
+[Unit]
+Description=Check ELITE runtime health every minute
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=60s
+RandomizedDelaySec=10s
+Persistent=true
+Unit=elite-watchdog.service
+
+[Install]
+WantedBy=timers.target
