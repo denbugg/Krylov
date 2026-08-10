@@ -106,8 +106,8 @@ class SiteSmokeTest(unittest.TestCase):
             "/article-hudozhestvennaya-gimnastika-s-3-let.html": (
                 "/article/hudozhestvennaya-gimnastika-s-3-let"
             ),
-            "/contacts.html": "/#contacts",
-            "/prices.html": "/#price",
+            "/contacts.html": "/#location",
+            "/prices.html": "/#groups",
         }
         for path, destination in expected.items():
             response = self.client.get(path)
