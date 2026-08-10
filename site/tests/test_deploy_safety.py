@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 
@@ -42,6 +43,22 @@ class DeploySafetyTests(unittest.TestCase):
             self.assertIn('local target="$1"', text, name)
             self.assertIn('local link="$2"', text, name)
             self.assertIn('local tmp="${link}.new"', text, name)
+
+    def test_local_declarations_do_not_reference_same_line_locals(self):
+        """Avoid Bash nounset traps such as: local a="$1" b="$a/x"."""
+        declaration = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)=")
+        for path in DEPLOY.glob("*.sh"):
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                stripped = line.strip()
+                if not stripped.startswith("local "):
+                    continue
+                names = declaration.findall(stripped)
+                for name in names:
+                    if f"${name}" in stripped or f"${{{name}}}" in stripped:
+                        self.fail(
+                            f"{path.name}:{lineno} declares and references local {name!r} "
+                            "on the same line; this is unsafe with set -u"
+                        )
 
     def test_watchdog_and_backup_are_present(self):
         self.assertTrue((DEPLOY / "watchdog.sh").is_file())
