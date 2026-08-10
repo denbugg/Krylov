@@ -41,7 +41,8 @@ atomic_link() {
 }
 
 install_runtime() {
-  local release="$1" site="$release/site"
+  local release="$1"
+  local site="${release}/site"
   mkdir -p "$STATE_DIR" "$FALLBACK_DIR"
   chown elite:www-data "$STATE_DIR"
   chmod 0750 "$STATE_DIR"
@@ -82,7 +83,8 @@ install_runtime() {
 }
 
 build_release() {
-  local target="$1" release="$2"
+  local target="$1"
+  local release="$2"
   if [ -f "$release/.prepared" ] && [ -d "$release/site" ] && [ -x "$release/venv/bin/python" ]; then
     echo "Release ${target:0:7} already prepared and smoke-tested"
     return
