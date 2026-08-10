@@ -33,7 +33,9 @@ git_elite() {
 }
 
 atomic_link() {
-  local target="$1" link="$2" tmp="${link}.new"
+  local target="$1"
+  local link="$2"
+  local tmp="${link}.new"
   ln -sfn "$target" "$tmp"
   mv -Tf "$tmp" "$link"
 }
