@@ -22,11 +22,11 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    error_page 502 503 504 /__elite_fallback.html;
-    location = /__elite_fallback.html {
+    error_page 502 503 504 /fallback/index.html;
+    location = /fallback/index.html {
         internal;
-        root /srv/elite/fallback;
-        try_files /index.html =503;
+        root /srv/elite;
+        default_type text/html;
         add_header Cache-Control "no-store" always;
         add_header Retry-After "60" always;
     }
