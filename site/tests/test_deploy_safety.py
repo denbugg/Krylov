@@ -60,6 +60,15 @@ class DeploySafetyTests(unittest.TestCase):
                             "on the same line; this is unsafe with set -u"
                         )
 
+    def test_previous_release_comes_from_success_state(self):
+        text = self.read("update.sh")
+        self.assertIn('DEPLOYED_SHA="$(cat "$STATE_DIR/deployed-sha"', text)
+        self.assertIn('OLD_RELEASE="$RELEASES/$DEPLOYED_SHA"', text)
+        self.assertIn('if [ "$TARGET" = "$DEPLOYED_SHA" ]; then', text)
+        self.assertIn('atomic_link "$OLD_RELEASE" "$PREVIOUS"', text)
+        self.assertIn('printf \'%s\\n\' "$DEPLOYED_SHA" >"$STATE_DIR/previous-sha"', text)
+        self.assertIn("clearing uncommitted current symlink", text)
+
     def test_watchdog_and_backup_are_present(self):
         self.assertTrue((DEPLOY / "watchdog.sh").is_file())
         self.assertTrue((DEPLOY / "elite-watchdog.timer").is_file())
