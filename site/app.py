@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import re
@@ -11,6 +12,7 @@ from urllib.parse import quote
 from flask import Flask, Response, jsonify, redirect, render_template, request
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
 PHONE_RE = re.compile(r"\d")
 
 
@@ -54,6 +56,16 @@ def security_and_crawl_headers(response: Response) -> Response:
         response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline'; frame-src https://yandex.ru https://*.yandex.ru; "
+        "connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+    )
+    if request.path.startswith("/api/admin/"):
+        response.headers["Cache-Control"] = "no-store"
     return response
 
 
@@ -173,7 +185,8 @@ def create_lead():
 def admin_leads():
     expected = os.getenv("ADMIN_TOKEN", "").strip()
     supplied = request.headers.get("Authorization", "")
-    if not expected or supplied != f"Bearer {expected}":
+    expected_header = f"Bearer {expected}"
+    if not expected or not hmac.compare_digest(supplied, expected_header):
         return jsonify({"error": "unauthorized"}), 401
     try:
         limit = min(max(int(request.args.get("limit", 50)), 1), 200)
@@ -185,7 +198,9 @@ def admin_leads():
         (limit,),
     ).fetchall()
     conn.close()
-    return jsonify({"leads": [dict(row) for row in rows]})
+    response = jsonify({"leads": [dict(row) for row in rows]})
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.get("/index.html")
