@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Clean-server bootstrap for Ubuntu 24.04. Run as root.
+# Clean-server bootstrap for supported Ubuntu LTS releases. Run as root.
 # Required env: DOMAIN. The script prepares only the ELITE site stack.
 if [ "${EUID}" -ne 0 ]; then
   echo "Run as root." >&2
@@ -42,13 +42,17 @@ else
   runuser -u elite -- git -C /srv/elite/repo sparse-checkout set site
 fi
 
-ADMIN_TOKEN="$(python3 - <<'PY'
+ENV_FILE=/etc/elite/elite.env
+if [ -f "$ENV_FILE" ]; then
+  echo "Preserving existing $ENV_FILE (including server-only secrets)."
+else
+  ADMIN_TOKEN="$(python3 - <<'PY'
 import secrets
 print(secrets.token_urlsafe(36))
 PY
 )"
 
-cat >/etc/elite/elite.env <<EOF
+  cat >"$ENV_FILE" <<EOF
 SITE_ENV=$SITE_ENV
 SITE_DOMAIN=$DOMAIN
 SITE_SCHEME=https
@@ -67,15 +71,16 @@ TELEGRAM_ADMIN_USERNAME=Undina_007
 TELEGRAM_ADMIN_CHAT_ID=
 PORT=8000
 EOF
-chmod 600 /etc/elite/elite.env
-chown root:root /etc/elite/elite.env
+fi
+chmod 600 "$ENV_FILE"
+chown root:root "$ENV_FILE"
 
 # Put the emergency page in place before starting the application stack.
 install -m 0644 /srv/elite/repo/site/deploy/fallback.html /srv/elite/fallback/index.html
 
 # The updater builds an isolated versioned release, runs tests and candidate
 # health checks, atomically activates it, installs Nginx/systemd units, and
-# enables the autodeploy/backup timers.
+# enables the autodeploy/backup/watchdog timers.
 bash /srv/elite/repo/site/deploy/update.sh
 
 ufw allow OpenSSH
@@ -84,12 +89,14 @@ ufw --force enable
 
 systemctl is-active --quiet elite.service
 systemctl is-active --quiet elite-autodeploy.timer
+systemctl is-active --quiet elite-watchdog.timer
 curl --retry 10 --retry-delay 1 --retry-connrefused -fsS http://127.0.0.1:8000/healthz >/dev/null
 
 echo
 echo "Bootstrap OK"
 echo "Current release: $(basename "$(readlink -f /srv/elite/current)")"
 echo "Autodeploy timer: $(systemctl is-active elite-autodeploy.timer)"
+echo "Watchdog timer: $(systemctl is-active elite-watchdog.timer)"
 echo "Backup timer: $(systemctl is-active elite-backup.timer 2>/dev/null || echo inactive)"
-echo "Indexing: $SITE_INDEXABLE"
+echo "Indexing: $(sed -n 's/^SITE_INDEXABLE=//p' "$ENV_FILE" | tail -n 1)"
 echo "Next: issue/verify HTTPS for $DOMAIN, run security smoke, then enable indexing after production QA."
