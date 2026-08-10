@@ -1,0 +1,9 @@
+[Unit]
+Description=Backup ELITE leads database
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/elite-backup-leads
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
