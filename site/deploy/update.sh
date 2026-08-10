@@ -24,6 +24,7 @@ TMP_DIR="$(mktemp -d /tmp/elite-update.XXXXXX)"
 CANDIDATE_PORT=18000
 SWITCHED=0
 OLD_RELEASE=""
+DEPLOYED_SHA=""
 
 chown elite:elite "$TMP_DIR"
 chmod 0700 "$TMP_DIR"
@@ -135,7 +136,11 @@ build_release() {
 }
 
 restore_old_release() {
-  if [ "$SWITCHED" -eq 1 ] && [ -n "$OLD_RELEASE" ] && [ -d "$OLD_RELEASE" ]; then
+  if [ "$SWITCHED" -ne 1 ]; then
+    return
+  fi
+
+  if [ -n "$OLD_RELEASE" ] && [ -d "$OLD_RELEASE" ]; then
     echo "Activation failed; atomically restoring $(basename "$OLD_RELEASE" | cut -c1-7)" >&2
     atomic_link "$OLD_RELEASE" "$CURRENT"
     install_runtime "$OLD_RELEASE" || true
@@ -143,6 +148,10 @@ restore_old_release() {
     token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
     [ -n "$token" ] && systemctl restart elite-bot.service >/dev/null 2>&1 || true
     systemctl reload nginx || true
+  else
+    echo "Activation failed before any successful production release; clearing uncommitted current symlink" >&2
+    rm -f "$CURRENT"
+    systemctl stop elite.service >/dev/null 2>&1 || true
   fi
 }
 trap 'status=$?; if [ $status -ne 0 ]; then restore_old_release; fi; rm -rf -- "$TMP_DIR"; exit $status' EXIT
@@ -153,13 +162,27 @@ chown elite:elite "$RELEASES"
 git_elite fetch --prune origin sitest
 TARGET="$(git_elite rev-parse origin/sitest)"
 RELEASE="$RELEASES/$TARGET"
-CURRENT_SHA=""
-if [ -L "$CURRENT" ]; then
-  OLD_RELEASE="$(readlink -f "$CURRENT")"
-  CURRENT_SHA="$(basename "$OLD_RELEASE")"
+
+# The deployed-sha file is the authority for the last release that completed
+# activation. A current symlink left by an interrupted first deploy is not.
+DEPLOYED_SHA="$(cat "$STATE_DIR/deployed-sha" 2>/dev/null || true)"
+if [ -n "$DEPLOYED_SHA" ] && [ -f "$RELEASES/$DEPLOYED_SHA/.prepared" ] && [ -d "$RELEASES/$DEPLOYED_SHA/site" ]; then
+  OLD_RELEASE="$RELEASES/$DEPLOYED_SHA"
+else
+  DEPLOYED_SHA=""
+  OLD_RELEASE=""
 fi
 
-if [ "$TARGET" = "$CURRENT_SHA" ]; then
+CURRENT_REAL="$(readlink -f "$CURRENT" 2>/dev/null || true)"
+if [ -n "$OLD_RELEASE" ] && [ "$CURRENT_REAL" != "$OLD_RELEASE" ]; then
+  echo "Recovering current symlink to last successful release ${DEPLOYED_SHA:0:7}"
+  atomic_link "$OLD_RELEASE" "$CURRENT"
+elif [ -z "$OLD_RELEASE" ] && [ -L "$CURRENT" ]; then
+  echo "Discarding uncommitted current symlink from an interrupted activation"
+  rm -f "$CURRENT"
+fi
+
+if [ "$TARGET" = "$DEPLOYED_SHA" ]; then
   echo "ELITE already on ${TARGET:0:7}; verifying current release"
   (
     cd "$CURRENT/site"
@@ -173,6 +196,8 @@ build_release "$TARGET" "$RELEASE"
 
 if [ -n "$OLD_RELEASE" ] && [ -d "$OLD_RELEASE" ]; then
   atomic_link "$OLD_RELEASE" "$PREVIOUS"
+else
+  rm -f "$PREVIOUS"
 fi
 atomic_link "$RELEASE" "$CURRENT"
 SWITCHED=1
@@ -196,7 +221,11 @@ if [ -f "/etc/letsencrypt/live/$domain/fullchain.pem" ] && [ -x /usr/local/sbin/
 fi
 
 printf '%s\n' "$TARGET" >"$STATE_DIR/deployed-sha"
-if [ -n "$CURRENT_SHA" ]; then printf '%s\n' "$CURRENT_SHA" >"$STATE_DIR/previous-sha"; fi
+if [ -n "$DEPLOYED_SHA" ]; then
+  printf '%s\n' "$DEPLOYED_SHA" >"$STATE_DIR/previous-sha"
+else
+  rm -f "$STATE_DIR/previous-sha"
+fi
 chown elite:www-data "$STATE_DIR"/*-sha 2>/dev/null || true
 chmod 0640 "$STATE_DIR"/*-sha 2>/dev/null || true
 SWITCHED=0
@@ -212,4 +241,4 @@ for dir in "${candidates[@]}"; do
   if [ "$kept_extra" -gt 2 ]; then rm -rf -- "$dir"; fi
 done
 
-echo "ELITE activated ${TARGET:0:7}; previous ${CURRENT_SHA:0:7}; fallback, watchdog and rollback ready"
+echo "ELITE activated ${TARGET:0:7}; previous ${DEPLOYED_SHA:0:7}; fallback, watchdog and rollback ready"
