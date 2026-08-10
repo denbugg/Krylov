@@ -81,11 +81,13 @@ install_runtime() {
 
 build_release() {
   local target="$1" release="$2"
-  if [ -d "$release/site" ] && [ -x "$release/venv/bin/python" ]; then
-    echo "Release ${target:0:7} already prepared"
+  if [ -f "$release/.prepared" ] && [ -d "$release/site" ] && [ -x "$release/venv/bin/python" ]; then
+    echo "Release ${target:0:7} already prepared and smoke-tested"
     return
   fi
 
+  # A directory without .prepared is an interrupted or failed candidate and
+  # must never be trusted or activated on a retry.
   rm -rf "$release"
   install -d -o elite -g elite "$release"
   echo "Materializing candidate ${target:0:7}..."
@@ -102,7 +104,9 @@ build_release() {
   )
 
   echo "Starting isolated candidate smoke test on 127.0.0.1:${CANDIDATE_PORT}..."
-  runuser -u elite -- sh -c "exec env SITE_ENV=staging SITE_DOMAIN=localhost SITE_INDEXABLE=false LEADS_DB_PATH='$TMP_DIR/candidate.sqlite3' '$release/venv/bin/gunicorn' --chdir '$release/site' --workers 1 --bind 127.0.0.1:${CANDIDATE_PORT} --access-logfile /dev/null --error-logfile '$TMP_DIR/candidate.log' wsgi:app" &
+  # runuser inherits root's cwd. Explicitly move to the release before starting
+  # Gunicorn so the unprivileged elite user never needs to traverse /root.
+  runuser -u elite -- sh -c "cd '$release/site' && exec env SITE_ENV=staging SITE_DOMAIN=localhost SITE_INDEXABLE=false LEADS_DB_PATH='$TMP_DIR/candidate.sqlite3' '$release/venv/bin/gunicorn' --chdir '$release/site' --workers 1 --bind 127.0.0.1:${CANDIDATE_PORT} --access-logfile /dev/null --error-logfile '$TMP_DIR/candidate.log' wsgi:app" &
   candidate_pid=$!
   candidate_ok=0
   for _ in $(seq 1 20); do
@@ -119,6 +123,11 @@ build_release() {
     cat "$TMP_DIR/candidate.log" >&2 || true
     return 1
   fi
+
+  # Only a candidate that passed compilation, all tests and isolated runtime
+  # health is eligible for reuse/activation.
+  touch "$release/.prepared"
+  chown elite:elite "$release/.prepared"
 }
 
 restore_old_release() {
