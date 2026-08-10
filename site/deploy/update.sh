@@ -23,30 +23,31 @@ install_runtime_units() {
   chmod 0750 "$STATE_DIR"
   install -m 0755 "$SITE/deploy/update.sh" /usr/local/sbin/elite-update
   install -m 0755 "$SITE/deploy/rollback.sh" /usr/local/sbin/elite-rollback
-  if [ -f "$SITE/deploy/configure-telegram.sh" ]; then
-    install -m 0755 "$SITE/deploy/configure-telegram.sh" /usr/local/sbin/elite-configure-telegram
-  fi
+  [ -f "$SITE/deploy/configure-telegram.sh" ] && install -m 0755 "$SITE/deploy/configure-telegram.sh" /usr/local/sbin/elite-configure-telegram
+  [ -f "$SITE/deploy/security-smoke.sh" ] && install -m 0755 "$SITE/deploy/security-smoke.sh" /usr/local/sbin/elite-security-smoke
   install -m 0644 "$SITE/deploy/elite.service" /etc/systemd/system/elite.service
-  if [ -f "$SITE/deploy/elite-bot.service" ]; then
-    install -m 0644 "$SITE/deploy/elite-bot.service" /etc/systemd/system/elite-bot.service
-  fi
+  [ -f "$SITE/deploy/elite-bot.service" ] && install -m 0644 "$SITE/deploy/elite-bot.service" /etc/systemd/system/elite-bot.service
   if [ -f "$SITE/deploy/elite-autodeploy.service" ] && [ -f "$SITE/deploy/elite-autodeploy.timer" ]; then
     install -m 0644 "$SITE/deploy/elite-autodeploy.service" /etc/systemd/system/elite-autodeploy.service
     install -m 0644 "$SITE/deploy/elite-autodeploy.timer" /etc/systemd/system/elite-autodeploy.timer
   fi
   systemctl daemon-reload
-  if [ -f /etc/systemd/system/elite-autodeploy.timer ]; then
-    systemctl enable --now elite-autodeploy.timer >/dev/null 2>&1 || true
-  fi
+  [ -f /etc/systemd/system/elite-autodeploy.timer ] && systemctl enable --now elite-autodeploy.timer >/dev/null 2>&1 || true
   token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
   if [ -n "$token" ] && [ -f /etc/systemd/system/elite-bot.service ]; then
     systemctl enable --now elite-bot.service >/dev/null 2>&1 || true
   fi
 }
 
-# Always install the latest deployment units from the currently checked-out site.
-# This makes the second invocation after the first upgrade complete the one-time
-# bot/autodeploy installation even when there is no newer Git commit.
+run_predeploy_tests() {
+  echo "Running ELITE security/regression tests..."
+  (
+    cd "$SITE"
+    PYTHONPATH="$SITE" "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py' -v
+  )
+}
+
+# Keep management scripts current even if the Git target does not change.
 install_runtime_units
 
 PREV="$(git_elite rev-parse HEAD)"
@@ -54,6 +55,7 @@ git_elite fetch --prune origin sitest
 TARGET="$(git_elite rev-parse origin/sitest)"
 
 if [ "$TARGET" = "$PREV" ]; then
+  run_predeploy_tests
   echo "ELITE already up to date at ${PREV:0:7}"
   exit 0
 fi
@@ -68,7 +70,7 @@ rollback() {
   "$VENV/bin/pip" install -r "$SITE/requirements.txt"
   install -m 0644 "$TMP_DIR/nginx.conf" /etc/nginx/sites-available/elite
   install -m 0644 "$TMP_DIR/elite.service" /etc/systemd/system/elite.service
-  systemctl daemon-reload
+  install_runtime_units
   nginx -t
   systemctl restart elite
   systemctl reload nginx
@@ -80,6 +82,9 @@ deploy() {
   git_elite sparse-checkout set site || return 1
   "$VENV/bin/python" -m py_compile "$SITE/app.py" "$SITE/wsgi.py" "$SITE/bot.py" || return 1
   "$VENV/bin/pip" install -r "$SITE/requirements.txt" || return 1
+
+  # Deployment gate: do not expose the candidate if security/regression tests fail.
+  run_predeploy_tests || return 1
 
   domain="$(sed -n 's/^SITE_DOMAIN=//p' /etc/elite/elite.env | tail -n 1)"
   [ -n "$domain" ] || return 1
@@ -98,6 +103,12 @@ deploy() {
   token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
   if [ -n "$token" ] && [ -f /etc/systemd/system/elite-bot.service ]; then
     systemctl restart elite-bot || return 1
+    systemctl is-active --quiet elite-bot || return 1
+  fi
+
+  # Live security checks only when HTTPS is already provisioned.
+  if [ -f "/etc/letsencrypt/live/$domain/fullchain.pem" ] && [ -x "$SITE/deploy/security-smoke.sh" ]; then
+    "$SITE/deploy/security-smoke.sh" "$domain" || return 1
   fi
 }
 
