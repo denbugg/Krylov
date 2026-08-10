@@ -6,6 +6,14 @@ if [ "${EUID}" -ne 0 ]; then
   exit 1
 fi
 
+# Prevent a manual deploy from racing the systemd autodeploy timer or watchdog.
+UPDATE_LOCK=/run/elite-update.lock
+exec 9>"$UPDATE_LOCK"
+if ! flock -n 9; then
+  echo "Another ELITE deploy/watchdog operation is already running; skipping."
+  exit 0
+fi
+
 REPO=/srv/elite/repo
 RELEASES=/srv/elite/releases
 CURRENT=/srv/elite/current
