@@ -6,6 +6,13 @@ if [ "${EUID}" -ne 0 ]; then
   exit 1
 fi
 
+UPDATE_LOCK=/run/elite-update.lock
+exec 9>"$UPDATE_LOCK"
+if ! flock -n 9; then
+  echo "Another ELITE deploy/watchdog operation is already running; rollback not started." >&2
+  exit 1
+fi
+
 RELEASES=/srv/elite/releases
 CURRENT=/srv/elite/current
 PREVIOUS=/srv/elite/previous
