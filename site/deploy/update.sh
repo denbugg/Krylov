@@ -17,7 +17,6 @@ CANDIDATE_PORT=18000
 SWITCHED=0
 OLD_RELEASE=""
 
-# The isolated candidate runs as the unprivileged elite user and needs this temp dir.
 chown elite:elite "$TMP_DIR"
 chmod 0700 "$TMP_DIR"
 
@@ -36,12 +35,14 @@ install_runtime() {
   mkdir -p "$STATE_DIR" "$FALLBACK_DIR"
   chown elite:www-data "$STATE_DIR"
   chmod 0750 "$STATE_DIR"
+
   install -m 0644 "$site/deploy/fallback.html" "$FALLBACK_DIR/index.html"
   install -m 0755 "$site/deploy/update.sh" /usr/local/sbin/elite-update
   install -m 0755 "$site/deploy/rollback.sh" /usr/local/sbin/elite-rollback
   [ -f "$site/deploy/configure-telegram.sh" ] && install -m 0755 "$site/deploy/configure-telegram.sh" /usr/local/sbin/elite-configure-telegram
   [ -f "$site/deploy/security-smoke.sh" ] && install -m 0755 "$site/deploy/security-smoke.sh" /usr/local/sbin/elite-security-smoke
   [ -f "$site/deploy/backup-leads.sh" ] && install -m 0755 "$site/deploy/backup-leads.sh" /usr/local/sbin/elite-backup-leads
+  [ -f "$site/deploy/watchdog.sh" ] && install -m 0755 "$site/deploy/watchdog.sh" /usr/local/sbin/elite-watchdog
 
   install -m 0644 "$site/deploy/elite.service" /etc/systemd/system/elite.service
   [ -f "$site/deploy/elite-bot.service" ] && install -m 0644 "$site/deploy/elite-bot.service" /etc/systemd/system/elite-bot.service
@@ -49,6 +50,8 @@ install_runtime() {
   [ -f "$site/deploy/elite-autodeploy.timer" ] && install -m 0644 "$site/deploy/elite-autodeploy.timer" /etc/systemd/system/elite-autodeploy.timer
   [ -f "$site/deploy/elite-backup.service" ] && install -m 0644 "$site/deploy/elite-backup.service" /etc/systemd/system/elite-backup.service
   [ -f "$site/deploy/elite-backup.timer" ] && install -m 0644 "$site/deploy/elite-backup.timer" /etc/systemd/system/elite-backup.timer
+  [ -f "$site/deploy/elite-watchdog.service" ] && install -m 0644 "$site/deploy/elite-watchdog.service" /etc/systemd/system/elite-watchdog.service
+  [ -f "$site/deploy/elite-watchdog.timer" ] && install -m 0644 "$site/deploy/elite-watchdog.timer" /etc/systemd/system/elite-watchdog.timer
 
   domain="$(sed -n 's/^SITE_DOMAIN=//p' /etc/elite/elite.env | tail -n 1)"
   [ -n "$domain" ]
@@ -65,6 +68,7 @@ install_runtime() {
   systemctl enable nginx >/dev/null 2>&1 || true
   [ -f /etc/systemd/system/elite-autodeploy.timer ] && systemctl enable --now elite-autodeploy.timer >/dev/null 2>&1 || true
   [ -f /etc/systemd/system/elite-backup.timer ] && systemctl enable --now elite-backup.timer >/dev/null 2>&1 || true
+  [ -f /etc/systemd/system/elite-watchdog.timer ] && systemctl enable --now elite-watchdog.timer >/dev/null 2>&1 || true
 }
 
 build_release() {
@@ -187,4 +191,4 @@ for dir in "${candidates[@]}"; do
   if [ "$kept_extra" -gt 2 ]; then rm -rf -- "$dir"; fi
 done
 
-echo "ELITE activated ${TARGET:0:7}; previous ${CURRENT_SHA:0:7}; fallback and rollback ready"
+echo "ELITE activated ${TARGET:0:7}; previous ${CURRENT_SHA:0:7}; fallback, watchdog and rollback ready"
