@@ -16,7 +16,10 @@ TMP_DIR="$(mktemp -d /tmp/elite-update.XXXXXX)"
 CANDIDATE_PORT=18000
 SWITCHED=0
 OLD_RELEASE=""
-trap 'rm -rf -- "$TMP_DIR"' EXIT
+
+# The isolated candidate runs as the unprivileged elite user and needs this temp dir.
+chown elite:elite "$TMP_DIR"
+chmod 0700 "$TMP_DIR"
 
 git_elite() {
   runuser -u elite -- git -C "$REPO" "$@"
