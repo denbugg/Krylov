@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily backup schedule for ELITE leads
+
+[Timer]
+OnCalendar=*-*-* 03:20:00 UTC
+Persistent=true
+RandomizedDelaySec=15m
+Unit=elite-backup.service
+
+[Install]
+WantedBy=timers.target

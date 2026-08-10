@@ -1,0 +1,7 @@
+[Unit]
+Description=ELITE runtime health watchdog
+After=elite.service nginx.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/elite-watchdog

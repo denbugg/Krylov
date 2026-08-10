@@ -1,15 +1,17 @@
 [Unit]
 Description=ELITE rhythmic gymnastics website
 After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=10
 
 [Service]
 Type=simple
 User=elite
 Group=www-data
-WorkingDirectory=/srv/elite/site
+WorkingDirectory=/srv/elite/current/site
 EnvironmentFile=/etc/elite/elite.env
-ExecStart=/srv/elite/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 --access-logfile - --error-logfile - wsgi:app
-Restart=always
+ExecStart=/srv/elite/current/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 --access-logfile - --error-logfile - wsgi:app
+Restart=on-failure
 RestartSec=3
 UMask=0027
 StateDirectory=elite
