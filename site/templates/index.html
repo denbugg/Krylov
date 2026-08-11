@@ -8,6 +8,7 @@
 <meta name="description" content="ELITE — художественная гимнастика для девочек 3–5 лет в Ново‑Переделкино. Бесплатное пробное занятие. Москва, Боровское шоссе, 43, этаж 3.">
 <meta name="robots" content="{{ robots }}">
 <link rel="canonical" href="{{ canonical_url }}">
+<link rel="icon" href="/static/assets/elite-wordmark.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:site_name" content="ELITE">
@@ -23,14 +24,18 @@
 <section class="hero" id="top">
   <div class="shell hero-grid">
     <div class="hero-copy">
-      <img class="wordmark" src="/static/assets/elite-wordmark.svg" alt="ELITE">
+      <div class="brand-lockup">
+        <span class="brand-butterfly" aria-hidden="true">◇</span>
+        <img class="wordmark" src="/static/assets/elite-wordmark.svg" alt="ELITE">
+        <span class="brand-butterfly brand-butterfly--small" aria-hidden="true">◇</span>
+      </div>
       <span class="eyebrow">ХУДОЖЕСТВЕННАЯ ГИМНАСТИКА · НОВО‑ПЕРЕДЕЛКИНО</span>
       <h1>Первый шаг<br>в <em>гимнастику</em></h1>
       <p>Для девочек 3–5 лет. Можно без подготовки: движение, музыка, предметы и спокойное знакомство с тренировочным ритмом.</p>
       <div class="hero-facts"><b>Пробное — 0 ₽</b><span>Абонемент — 8 000 ₽/мес.</span></div>
       <div class="hero-actions">
-        <button class="btn" data-telegram data-source="hero">Записаться бесплатно в Telegram</button>
-        <a class="btn secondary" href="#location">Посмотреть, где мы</a>
+        <a class="btn" href="#trial" data-callback data-source="hero">Записаться на пробное</a>
+        {% if telegram_url %}<a class="btn secondary" href="{{ telegram_url }}" target="_blank" rel="noopener" data-telegram-link data-source="hero_tg">Написать в Telegram</a>{% endif %}
       </div>
     </div>
     <div class="hero-photo">
@@ -39,13 +44,15 @@
     </div>
   </div>
 </section>
+
 <section class="localbar" aria-label="Коротко о клубе">
   <div class="shell">
     <div><b>Один зал</b><span>Боровское шоссе, 43, этаж 3</span></div>
     <div><b>Начинающие группы</b><span>Основной набор сейчас — 3–5 лет</span></div>
-    <div><b>Быстрый контакт</b><span>Telegram / MAX или обратный звонок</span></div>
+    <div><b>Пробное бесплатно</b><span>Оставьте телефон или напишите в Telegram</span></div>
   </div>
 </section>
+
 <section class="section" id="about">
   <div class="shell about-grid">
     <figure class="about-photo"><img loading="lazy" src="/static/assets/4ac3c2c350dbb386.webp" alt="Гимнастки ELITE"></figure>
@@ -56,28 +63,49 @@
       <div class="reason-grid">
         <article class="reason"><b>01</b><h3>Можно с нуля</h3><p>Предварительная растяжка или спортивный опыт не нужны.</p></article>
         <article class="reason"><b>02</b><h3>Возрастной темп</h3><p>Подача и нагрузка адаптированы под маленьких детей.</p></article>
-        <article class="reason"><b>03</b><h3>Своя компания</h3><p>Группа создаёт пространство для общения, общих целей и первых маленьких достижений.</p></article>
-        <article class="reason"><b>04</b><h3>Один адрес</h3><p>Без выбора между филиалами: один зал и понятный маршрут.</p></article>
+        <article class="reason"><b>03</b><h3>Своя компания</h3><p>Группа даёт ребёнку общение, общие маленькие цели и ощущение своего круга.</p></article>
+        <article class="reason"><b>04</b><h3>Интерес важнее давления</h3><p>Сначала помогаем полюбить движение и научиться заниматься регулярно.</p></article>
       </div>
       <div class="research">Гимнастика сочетает ритм и сложную координацию движений; такие двигательные программы изучаются в связи с исполнительными и другими когнитивными функциями у детей. <a href="https://pubmed.ncbi.nlm.nih.gov/41076509/" target="_blank" rel="noopener">PubMed · систематический обзор, 2025</a>.</div>
     </div>
   </div>
 </section>
+
 <section class="section polechka" id="polechka">
   <div class="shell">
     <div class="polechka-intro">
-      <div><span class="eyebrow">МИР ДЛЯ РЕБЁНКА МЕЖДУ ТРЕНИРОВКАМИ</span><h2>Гимнастка<br><span class="serif">Полечка</span></h2></div>
-      <p>Не ещё одна «секция на два часа в неделю», а знакомый ребёнку мир вокруг гимнастики: посмотреть, повторить, поиграть, порисовать и вернуться в зал уже с собственным интересом.</p>
+      <div>
+        <span class="eyebrow">ЭКОСИСТЕМА ВОКРУГ ЗАНЯТИЙ</span>
+        <h2>Чтобы гимнастика<br><span class="serif">стала любимым делом</span></h2>
+      </div>
+      <p>В 3–5 лет интерес легко переключается. Поэтому между тренировками ребёнку важно встречаться с гимнастикой по собственному желанию — через игру, знакомых героев, движение и общение. Полечка продолжает мир клуба дома и превращает самостоятельную работу в понятные и приятные активности.</p>
     </div>
+
+    <div class="polechka-feature">
+      <div class="polechka-character" aria-hidden="true">
+        <span>П</span>
+        <small>Гимнастка<br>Полечка</small>
+      </div>
+      <div class="polechka-feature-copy">
+        <span class="eyebrow">НЕ «ДОМАШНЕЕ ЗАДАНИЕ», А ПРОДОЛЖЕНИЕ ИНТЕРЕСА</span>
+        <p>Мультфильмы, зарядки, раскраски, игровые материалы и знакомые образы помогают ребёнку возвращаться к тому, что было на тренировке. Так рекомендации тренера легче становятся частью самостоятельной активности — без ощущения ещё одного обязательного занятия.</p>
+        <div class="polechka-actions">
+          <a class="btn light" href="https://rutube.ru/channel/15975173/" target="_blank" rel="noopener">Смотреть Полечку</a>
+          <a class="btn ghost" href="#trial" data-callback data-source="polechka">Попробовать в клубе</a>
+        </div>
+      </div>
+    </div>
+
     <div class="polechka-cards">
-      <a class="p-card" href="https://mypolechka.ru/page10080648.html" target="_blank" rel="noopener"><div><span class="icon">▶</span><h3>Мультфильмы</h3><p>Истории Полечки знакомят ребёнка с гимнастикой и её героями.</p></div><small>Смотреть материалы →</small></a>
-      <a class="p-card" href="https://mypolechka.ru/" target="_blank" rel="noopener"><div><span class="icon">☀</span><h3>Зарядка дома</h3><p>Короткий понятный повод подвигаться самостоятельно между занятиями.</p></div><small>Открыть Полечку →</small></a>
-      <a class="p-card" href="https://mypolechka.ru/" target="_blank" rel="noopener"><div><span class="icon">✎</span><h3>Игры и раскраски</h3><p>Карточки, раскраски и игровые задания без ощущения «домашней тренировки».</p></div><small>Посмотреть →</small></a>
-      <a class="p-card" href="https://mypolechka.ru/" target="_blank" rel="noopener"><div><span class="icon">♡</span><h3>Рисунки детей</h3><p>Рисунки, письма и идеи детей становятся частью общения с Полечкой.</p></div><small>Узнать подробнее →</small></a>
+      <article class="p-card"><span class="p-index">01</span><h3>Смотреть и узнавать</h3><p>Знакомые герои, движения и предметы делают мир гимнастики понятнее ещё до следующей тренировки.</p></article>
+      <article class="p-card"><span class="p-index">02</span><h3>Пробовать самой</h3><p>Зарядка и короткие занятия дома дают ребёнку возможность двигаться самостоятельно и возвращаться к рекомендациям тренера.</p></article>
+      <article class="p-card"><span class="p-index">03</span><h3>Играть и отдыхать</h3><p>Раскраски, стикеры, карточки и игры сохраняют связь с любимым делом даже тогда, когда ребёнок просто отдыхает.</p></article>
+      <article class="p-card"><span class="p-index">04</span><h3>Быть частью своего мира</h3><p>Те же герои и материалы дома и в клубе создают общий язык, повод делиться впечатлениями и чувствовать себя частью сообщества.</p></article>
     </div>
-    <div class="polechka-note">Мультфильмы, зарядки, карточки, раскраски и рисунки помогают ребёнку возвращаться к теме гимнастики дома — не как к обязательной тренировке, а как к знакомому миру.</div>
+    <div class="polechka-note">Это и есть экосистема ELITE + Полечка: гимнастика остаётся рядом не как обязательный пункт расписания, а как дело, к которому хочется возвращаться. Постоянство и самостоятельность растут из интереса.</div>
   </div>
 </section>
+
 <section class="section life">
   <div class="shell">
     <span class="eyebrow">ЖИЗНЬ ELITE</span><h2>Тренировки, эмоции,<br><span class="serif">первые победы.</span></h2>
@@ -88,35 +116,63 @@
     </div>
   </div>
 </section>
+
 <section class="section groups" id="groups">
   <div class="shell">
     <span class="eyebrow">ГРУППЫ</span><h2>Сейчас — начало.<br><span class="serif">Дальше — по интересу.</span></h2>
     <div class="groups-grid">
-      <article class="group"><strong>3–5</strong><h3>Набор открыт</h3><p>Начальная группа для первого знакомства с художественной гимнастикой. Можно без подготовки.</p><div class="price"><div><span>Абонемент</span><br><b>8 000 ₽</b> / месяц</div><button class="btn" data-telegram data-source="group_3_5">Пробное — 0 ₽</button></div></article>
-      <article class="group"><strong>6–10</strong><h3>Собираем заявки</h3><p>Планируемая группа для девочек постарше. Оставьте контакт — сообщим, когда сформируется расписание.</p><div class="price"><span>Лист ожидания</span><button class="btn secondary" data-telegram data-source="group_6_10">Оставить контакт в Telegram</button></div></article>
+      <article class="group"><strong>3–5</strong><h3>Набор открыт</h3><p>Начальная группа для первого знакомства с художественной гимнастикой. Можно без подготовки.</p><div class="price"><div><span>Абонемент</span><br><b>8 000 ₽</b> / месяц</div><a class="btn" href="#trial" data-callback data-source="group_3_5">Пробное — 0 ₽</a></div></article>
+      <article class="group"><strong>6–10</strong><h3>Собираем заявки</h3><p>Планируемая группа для девочек постарше. Оставьте контакт — сообщим, когда сформируется расписание.</p><div class="price"><span>Лист ожидания</span><a class="btn secondary" href="#trial" data-callback data-source="group_6_10">Оставить контакт</a></div></article>
     </div>
   </div>
 </section>
-<section class="section" id="location">
-  <div class="shell contacts-grid">
-    <div class="contact-card">
-      <span class="eyebrow">НОВО‑ПЕРЕДЕЛКИНО</span>
-      <h2>Рядом — значит проще начать</h2>
-      <p><strong>{{ site_address }}</strong></p>
-      <p>Для родителя маршрут часто важнее длинного списка обещаний. Проверьте дорогу до зала — и если удобно, напишите нам в мессенджере.</p>
-      <div class="contact-actions">
-        {% if telegram_url %}<a class="btn" href="{{ telegram_url }}" target="_blank" rel="noopener">Написать в Telegram</a>{% else %}<a class="btn" href="https://t.me/Undina_007" target="_blank" rel="noopener">Написать в Telegram</a>{% endif %}
-        {% if max_url %}<a class="btn secondary" href="{{ max_url }}" target="_blank" rel="noopener">Написать в MAX</a>{% endif %}
-        {% if phone_href %}<a class="btn secondary" href="{{ phone_href }}">Позвонить {{ phone_display }}</a>{% else %}<a class="btn secondary" href="tel:+79169653513">Позвонить +7 916 965‑35‑13</a>{% endif %}
-        <button class="btn secondary" data-connect data-source="location">Заказать обратный звонок</button>
+
+<section class="section trial" id="trial">
+  <div class="shell trial-grid">
+    <div class="trial-copy">
+      <span class="eyebrow">ПРОБНОЕ ЗАНЯТИЕ — 0 ₽</span>
+      <h2>Оставьте телефон.<br><span class="serif">Мы перезвоним.</span></h2>
+      <p>Отдельно от карты и мессенджеров: просто оставьте номер, если удобнее обсудить запись голосом. Имя можно не указывать.</p>
+      <div class="trial-points">
+        <span>01 · уточним возраст и удобное время</span>
+        <span>02 · ответим на вопросы о первом занятии</span>
+        <span>03 · подтвердим запись</span>
       </div>
+      {% if telegram_url %}<p class="telegram-alt">Удобнее переписываться? <a href="{{ telegram_url }}" target="_blank" rel="noopener" data-telegram-link data-source="trial_tg">Открыть @rg_elite_bot →</a></p>{% endif %}
     </div>
+    <div class="trial-card">
+      <h3>Заказать обратный звонок</h3>
+      <form class="form" id="lead-form">
+        <label><span>Телефон</span><input name="phone" type="tel" maxlength="32" autocomplete="tel" inputmode="tel" placeholder="+7 916 000‑00‑00" required></label>
+        <label><span>Имя <small>необязательно</small></span><input name="name" maxlength="80" autocomplete="name" placeholder="Как к вам обращаться"></label>
+        <input class="honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input name="source" type="hidden" value="callback_block">
+        <input name="lead_type" type="hidden" value="trial_now">
+        <button class="btn" type="submit">Перезвоните мне</button>
+        <small>Отправляя форму, вы соглашаетесь с <a href="/consent" target="_blank">обработкой контактных данных</a> и <a href="/privacy" target="_blank">политикой конфиденциальности</a>.</small>
+        <div class="form-status" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="section location" id="location">
+  <div class="shell location-heading">
+    <div><span class="eyebrow">ГДЕ МЫ</span><h2>Зал в Ново‑Переделкино</h2></div>
+    <div class="location-facts">
+      <p><strong>{{ site_address }}</strong></p>
+      {% if phone_href %}<a href="{{ phone_href }}" data-phone-link>{{ phone_display }}</a>{% endif %}
+      {% if telegram_url %}<a href="{{ telegram_url }}" target="_blank" rel="noopener" data-telegram-link data-source="location_tg">Telegram · @rg_elite_bot</a>{% endif %}
+    </div>
+  </div>
+  <div class="shell map-only">
     <div class="map">
       <iframe title="ELITE на Яндекс Картах" src="{{ yandex_map_embed_url }}" loading="lazy" allowfullscreen></iframe>
-      <a class="route" href="{{ yandex_route_url }}" target="_blank" rel="noopener">Открыть маршрут в Яндекс Картах →</a>
+      <a class="route" href="{{ yandex_route_url }}" target="_blank" rel="noopener" data-route-link>Построить маршрут в Яндекс Картах →</a>
     </div>
   </div>
 </section>
+
 <section class="section faq" id="faq">
   <div class="shell">
     <span class="eyebrow">КОРОТКО О ГЛАВНОМ</span><h2>Вопросы родителей</h2>
@@ -125,38 +181,14 @@
       <details><summary>Нужна ли подготовка?</summary><p>Нет, для начальной группы специальная подготовка не требуется.</p></details>
       <details><summary>Можно сначала попробовать?</summary><p>Да. Пробное занятие сейчас бесплатное — 0 ₽.</p></details>
       <details><summary>Сколько стоит абонемент?</summary><p>Абонемент для текущей начальной группы — 8 000 ₽ в месяц.</p></details>
-      <details><summary>Где находится зал?</summary><p>{{ site_address }}. Ниже на карте можно открыть маршрут в Яндекс Картах.</p></details>
+      <details><summary>Где находится зал?</summary><p>{{ site_address }}. На карте выше можно построить маршрут.</p></details>
     </div>
   </div>
 </section>
 </main>
+
 <footer class="footer"><div class="shell footer-row"><img class="wordmark" src="/static/assets/elite-wordmark.svg" alt="ELITE"><span>Художественная гимнастика · Ново‑Переделкино</span><span>© 2026 ELITE · <a href="/privacy">Конфиденциальность</a> · <a href="/consent">Согласие</a></span></div></footer>
-<div class="sticky" data-sticky><button data-telegram data-source="sticky">Пробное бесплатно · Telegram</button></div>
-<div class="sheet" data-sheet aria-hidden="true">
-  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="contact-title">
-    <div class="sheet-inner">
-      <div class="sheet-top"><div><span class="eyebrow">ПРОБНОЕ — 0 ₽</span><h2 id="contact-title">Как удобнее связаться?</h2></div><button class="close" data-close aria-label="Закрыть">×</button></div>
-      <p>Быстрее всего — написать в мессенджер. Если удобнее, оставьте телефон: администратор перезвонит.</p>
-      <div class="channels">
-        {% if telegram_url %}<a class="channel primary" href="{{ telegram_url }}" target="_blank" rel="noopener">Telegram →</a>{% else %}<a class="channel primary" href="https://t.me/Undina_007" target="_blank" rel="noopener">Telegram →</a>{% endif %}
-        {% if max_url %}<a class="channel" href="{{ max_url }}" target="_blank" rel="noopener">MAX →</a>{% else %}<div class="channel" aria-disabled="true">MAX · подключаем</div>{% endif %}
-      </div>
-      <div class="bot-note">Telegram — основной путь записи: бот получает имя из профиля и просит поделиться контактом одной системной кнопкой. MAX подключим аналогично; обратный звонок остаётся альтернативой.</div>
-      <div class="callback">
-        <h3>Или заказать звонок</h3><p>Телефон обязателен, имя — по желанию.</p>
-        <form class="form" id="lead-form">
-          <input name="name" maxlength="80" autocomplete="name" placeholder="Имя (необязательно)">
-          <input name="phone" type="tel" maxlength="32" autocomplete="tel" inputmode="tel" placeholder="+7 916 000‑00‑00" required>
-          <input class="honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <input name="source" type="hidden">
-          <button class="btn" type="submit">Перезвоните мне</button>
-          <small>Отправляя форму, вы соглашаетесь с <a href="/consent" target="_blank">обработкой контактных данных</a> и <a href="/privacy" target="_blank">политикой конфиденциальности</a>.</small>
-          <div class="form-status" aria-live="polite"></div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="sticky" data-sticky><a href="#trial" data-callback data-source="sticky">Пробное бесплатно · оставить телефон</a></div>
 <script src="/static/site.js" defer></script>
 </body>
 </html>
