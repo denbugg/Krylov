@@ -20,12 +20,22 @@ class BotEntryContractTests(unittest.TestCase):
         self.assertIn('future_group', text)
         self.assertIn('discovery_source', text)
 
-    def test_token_configuration_has_single_hidden_prompt(self):
+    def test_token_configuration_is_one_step_and_visible(self):
         text = (ROOT / "deploy" / "configure-telegram.sh").read_text(encoding="utf-8")
-        self.assertIn('Telegram BotFather token (hidden): ', text)
+        self.assertIn('Telegram BotFather token: ', text)
         self.assertNotIn('Telegram bot username [', text)
+        self.assertNotIn('read -r -s', text)
         self.assertIn('/getMe', text)
         self.assertIn('requests.post', text)
+
+    def test_bot_runtime_forces_ipv4_without_host_wide_changes(self):
+        policy = (ROOT / "sitecustomize.py").read_text(encoding="utf-8")
+        service = (ROOT / "deploy" / "elite-bot.service").read_text(encoding="utf-8")
+        configure = (ROOT / "deploy" / "configure-telegram.sh").read_text(encoding="utf-8")
+        self.assertIn('socket.AF_INET', policy)
+        self.assertIn('allowed_gai_family', policy)
+        self.assertIn('Environment=PYTHONPATH=/srv/elite-bot/current/site', service)
+        self.assertIn('export PYTHONPATH="$CURRENT/site"', configure)
 
 
 if __name__ == "__main__":
