@@ -1,19 +1,25 @@
 from __future__ import annotations
 
+import hashlib
 import hmac
 import json
 import os
 import re
 import sqlite3
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
 from flask import Flask, Response, jsonify, redirect, render_template, request
 
+from lead_crypto import decrypt_text, encrypt_text, migrate_lead_pii
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
 PHONE_RE = re.compile(r"\d")
+RATE_WINDOW_SECONDS = 10 * 60
+RATE_MAX_ATTEMPTS = 5
 
 
 def _truthy(value: str | None) -> bool:
@@ -27,8 +33,9 @@ def _db_path() -> Path:
 def _db() -> sqlite3.Connection:
     path = _db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(path, timeout=15)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS leads (
@@ -45,9 +52,66 @@ def _db() -> sqlite3.Connection:
         )
         """
     )
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(leads)")}
+    additions = {
+        "telegram_user_id": "INTEGER",
+        "telegram_username": "TEXT",
+        "telegram_first_name": "TEXT",
+        "telegram_last_name": "TEXT",
+        "child_age": "TEXT",
+        "preferred_time": "TEXT",
+        "question": "TEXT",
+        "lead_type": "TEXT",
+        "note": "TEXT",
+        "next_follow_up_at": "TEXT",
+        "admin_notified_at": "TEXT",
+        "updated_at": "TEXT",
+    }
+    for column, sql_type in additions.items():
+        if column not in columns:
+            conn.execute(f"ALTER TABLE leads ADD COLUMN {column} {sql_type}")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS lead_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_ts INTEGER NOT NULL,
+            ip_hash TEXT NOT NULL
+        )
+        """
+    )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status, id DESC)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_lead_attempts ON lead_attempts(ip_hash, created_ts)")
+    migrate_lead_pii(conn)
     conn.commit()
     return conn
+
+
+def _client_ip_hash() -> str:
+    address = (request.headers.get("X-Real-IP") or request.remote_addr or "unknown").strip()
+    secret = (
+        os.getenv("IP_HASH_SALT", "").strip()
+        or os.getenv("LEADS_ENCRYPTION_KEY", "").strip()
+        or "elite-development-only"
+    )
+    return hmac.new(secret.encode("utf-8"), address.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def _consume_lead_attempt(conn: sqlite3.Connection) -> bool:
+    now = int(time.time())
+    cutoff = now - RATE_WINDOW_SECONDS
+    ip_hash = _client_ip_hash()
+    conn.execute("DELETE FROM lead_attempts WHERE created_ts < ?", (cutoff,))
+    count = conn.execute(
+        "SELECT COUNT(*) FROM lead_attempts WHERE ip_hash=? AND created_ts>=?",
+        (ip_hash, cutoff),
+    ).fetchone()[0]
+    if int(count) >= RATE_MAX_ATTEMPTS:
+        conn.commit()
+        return False
+    conn.execute("INSERT INTO lead_attempts(created_ts,ip_hash) VALUES(?,?)", (now, ip_hash))
+    conn.commit()
+    return True
 
 
 @app.after_request
@@ -93,8 +157,8 @@ def _site_context(path: str = "") -> dict[str, str]:
         for link in (
             telegram_url,
             max_url,
-            "https://mypolechka.ru/",
             "https://www.youtube.com/channel/UCONm9-FBKX-27uhrf647ZCQ",
+            "https://rutube.ru/channel/15975173/",
         )
         if link
     ]
@@ -146,38 +210,58 @@ def create_lead():
     name = str(payload.get("name", "")).strip()[:80]
     phone = str(payload.get("phone", "")).strip()[:32]
     digits = "".join(PHONE_RE.findall(phone))
-    if len(digits) < 10:
+    if len(digits) < 10 or len(digits) > 15:
         return jsonify({"ok": False, "error": "invalid_phone"}), 400
 
-    source = str(payload.get("source", "website")).strip()[:80]
+    source = str(payload.get("source", "callback_block")).strip()[:80]
     page = str(payload.get("page", "/")).strip()[:200]
     preferred_channel = str(payload.get("preferred_channel", "callback")).strip()[:40]
     referrer = str(payload.get("referrer", "")).strip()[:500]
+    lead_type = str(payload.get("lead_type", "trial_now")).strip()[:40]
+    if lead_type not in {"trial_now", "future_group"}:
+        lead_type = "trial_now"
     utm = payload.get("utm", {})
     if not isinstance(utm, dict):
         utm = {}
-    utm_json = json.dumps({str(k)[:60]: str(v)[:200] for k, v in utm.items()}, ensure_ascii=False)
+    utm_json = json.dumps(
+        {str(k)[:60]: str(v)[:200] for k, v in utm.items()}, ensure_ascii=False
+    )
 
     conn = _db()
-    cur = conn.execute(
-        """
-        INSERT INTO leads(created_at, name, phone, source, page, preferred_channel, referrer, utm_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            datetime.now(timezone.utc).isoformat(),
-            name or None,
-            phone,
-            source,
-            page,
-            preferred_channel,
-            referrer or None,
-            utm_json,
-        ),
-    )
-    conn.commit()
-    lead_id = cur.lastrowid
-    conn.close()
+    try:
+        if not _consume_lead_attempt(conn):
+            return jsonify({"ok": False, "error": "rate_limited"}), 429
+        encrypted_name = encrypt_text(name or None)
+        encrypted_phone = encrypt_text(phone)
+        now = datetime.now(timezone.utc).isoformat()
+        cur = conn.execute(
+            """
+            INSERT INTO leads(
+                created_at,name,phone,source,page,preferred_channel,referrer,utm_json,
+                status,lead_type,updated_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                now,
+                encrypted_name,
+                encrypted_phone,
+                source,
+                page,
+                preferred_channel,
+                referrer or None,
+                utm_json,
+                "new",
+                lead_type,
+                now,
+            ),
+        )
+        conn.commit()
+        lead_id = cur.lastrowid
+    except RuntimeError:
+        conn.rollback()
+        return jsonify({"ok": False, "error": "lead_storage_unavailable"}), 503
+    finally:
+        conn.close()
     return jsonify({"ok": True, "lead_id": lead_id}), 201
 
 
@@ -194,11 +278,21 @@ def admin_leads():
         limit = 50
     conn = _db()
     rows = conn.execute(
-        "SELECT id, created_at, name, phone, source, page, preferred_channel, status FROM leads ORDER BY id DESC LIMIT ?",
+        """
+        SELECT id,created_at,name,phone,source,page,preferred_channel,status,lead_type,
+               child_age,preferred_time
+        FROM leads ORDER BY id DESC LIMIT ?
+        """,
         (limit,),
     ).fetchall()
     conn.close()
-    response = jsonify({"leads": [dict(row) for row in rows]})
+    leads = []
+    for row in rows:
+        item = dict(row)
+        item["name"] = decrypt_text(item.get("name"))
+        item["phone"] = decrypt_text(item.get("phone"))
+        leads.append(item)
+    response = jsonify({"leads": leads})
     response.headers["Cache-Control"] = "no-store"
     return response
 
