@@ -19,8 +19,7 @@ if ! id -u elite >/dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p /srv/elite-bot/releases
-chown elite:elite /srv/elite-bot/releases
+install -d -m 0755 -o elite -g elite /srv/elite-bot /srv/elite-bot/releases
 
 if [ ! -d "$REPO/.git" ]; then
   rm -rf "$REPO"
