@@ -145,9 +145,18 @@ if ! systemctl is-active --quiet elite-bot.service; then
   exit 1
 fi
 
-"$VENV_PY" "$CURRENT/site/bot.py" --check
+encryption_key="$(sed -n 's/^LEADS_ENCRYPTION_KEY=//p' "$ENV_FILE" | tail -n 1)"
+db_path="$(sed -n 's/^LEADS_DB_PATH=//p' "$ENV_FILE" | tail -n 1)"
+db_path="${db_path:-/var/lib/elite/leads.sqlite3}"
+runuser -u elite -- env \
+  TELEGRAM_BOT_TOKEN="$BOT_TOKEN" \
+  LEADS_ENCRYPTION_KEY="$encryption_key" \
+  LEADS_DB_PATH="$db_path" \
+  SITE_ENV=production \
+  PYTHONPATH="$CURRENT/site" \
+  "$VENV_PY" "$CURRENT/site/bot.py" --check
 curl -fsS http://127.0.0.1:8000/healthz >/dev/null
-unset BOT_TOKEN TELEGRAM_BOT_TOKEN
+unset BOT_TOKEN TELEGRAM_BOT_TOKEN encryption_key db_path
 
 echo
 echo "Elite менеджер is active as @${BOT_USERNAME}."
