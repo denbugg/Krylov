@@ -9,6 +9,7 @@ fi
 ENV_FILE=/etc/elite/elite.env
 CURRENT=/srv/elite-bot/current
 VENV_PY="$CURRENT/venv/bin/python"
+EXPECTED_USERNAME=rg_elite_bot
 
 if [ ! -f "$ENV_FILE" ]; then
   echo "Missing $ENV_FILE. Deploy the site first." >&2
@@ -19,68 +20,71 @@ if [ ! -x "$VENV_PY" ]; then
   exit 1
 fi
 
-read -r -p "Telegram bot username [rg_elite_bot]: " BOT_USERNAME
-BOT_USERNAME="${BOT_USERNAME:-rg_elite_bot}"
-BOT_USERNAME="${BOT_USERNAME#@}"
-BOT_USERNAME="${BOT_USERNAME// /}"
-
-read -r -s -p "Telegram BotFather token (hidden): " BOT_TOKEN
+read -r -s -p "Telegram BotFather token for @${EXPECTED_USERNAME} (hidden): " BOT_TOKEN
 echo
 if [ -z "$BOT_TOKEN" ]; then
   echo "Bot token is required." >&2
   exit 1
 fi
 
+# One input only. Telegram's official getMe method is specifically intended to
+# test a bot authentication token and returns the bot username on success.
 DETECTED_USERNAME="$(TELEGRAM_BOT_TOKEN="$BOT_TOKEN" "$VENV_PY" - <<'PY'
-import json
 import os
 import sys
-import urllib.request
+import requests
 
 token = os.environ["TELEGRAM_BOT_TOKEN"]
-base = f"https://api.telegram.org/bot{token}"
+url = f"https://api.telegram.org/bot{token}/getMe"
 try:
-    with urllib.request.urlopen(base + "/getMe", timeout=12) as response:
-        data = json.load(response)
-except Exception:
-    print("Could not validate token against Telegram Bot API.", file=sys.stderr)
+    response = requests.post(url, timeout=15)
+except requests.RequestException as exc:
+    print(f"Telegram API connection failed ({type(exc).__name__}). Check server access to api.telegram.org.", file=sys.stderr)
     raise SystemExit(1)
-if not data.get("ok") or not data.get("result", {}).get("is_bot"):
-    print("Telegram rejected this bot token.", file=sys.stderr)
+if response.status_code != 200:
+    description = ""
+    try:
+        description = str(response.json().get("description") or "")
+    except ValueError:
+        pass
+    suffix = f": {description}" if description else ""
+    print(f"Telegram getMe returned HTTP {response.status_code}{suffix}", file=sys.stderr)
     raise SystemExit(1)
-print(data["result"].get("username", ""))
+try:
+    data = response.json()
+except ValueError:
+    print("Telegram getMe returned a non-JSON response.", file=sys.stderr)
+    raise SystemExit(1)
+result = data.get("result") or {}
+if not data.get("ok") or not result.get("is_bot") or not result.get("username"):
+    print("Telegram rejected the token or did not return a bot username.", file=sys.stderr)
+    raise SystemExit(1)
+print(result["username"])
 PY
 )"
 
-if [ "${DETECTED_USERNAME,,}" != "${BOT_USERNAME,,}" ]; then
-  echo "Token belongs to @${DETECTED_USERNAME}, not @${BOT_USERNAME}. Refusing to configure." >&2
+if [ "${DETECTED_USERNAME,,}" != "${EXPECTED_USERNAME,,}" ]; then
+  echo "This token belongs to @${DETECTED_USERNAME}, expected @${EXPECTED_USERNAME}. Refusing to bind the wrong bot." >&2
   unset BOT_TOKEN
   exit 1
 fi
+BOT_USERNAME="$DETECTED_USERNAME"
+echo "Telegram token accepted for @${BOT_USERNAME}"
 
-echo "Telegram token validated for @${DETECTED_USERNAME}"
-
-# This service uses long polling. Remove any old webhook and register the
-# operator commands before the systemd service starts polling.
 TELEGRAM_BOT_TOKEN="$BOT_TOKEN" "$VENV_PY" - <<'PY'
-import json
 import os
-import urllib.request
+import requests
 
 token = os.environ["TELEGRAM_BOT_TOKEN"]
 base = f"https://api.telegram.org/bot{token}"
 
-def call(method: str, payload: dict) -> dict:
-    req = urllib.request.Request(
-        base + "/" + method,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=12) as response:
-        data = json.load(response)
+def call(method: str, payload: dict) -> None:
+    response = requests.post(base + "/" + method, json=payload, timeout=15)
+    if response.status_code != 200:
+        raise SystemExit(f"Telegram {method} returned HTTP {response.status_code}")
+    data = response.json()
     if not data.get("ok"):
-        raise RuntimeError(method + " failed")
-    return data
+        raise SystemExit(f"Telegram {method} failed")
 
 call("deleteWebhook", {"drop_pending_updates": False})
 call(
@@ -96,7 +100,7 @@ call(
         ]
     },
 )
-print("Telegram polling mode and manager commands configured")
+print("Telegram long polling and manager commands configured")
 PY
 
 set_env() {
@@ -133,8 +137,6 @@ chown root:root "$ENV_FILE"
 systemctl daemon-reload
 systemctl enable --now elite-bot.service
 systemctl restart elite-bot.service
-# The site process reads TELEGRAM_BOT_USERNAME from the same environment file;
-# restart it so public Telegram CTAs immediately point to @rg_elite_bot.
 systemctl restart elite.service
 
 sleep 1
@@ -154,7 +156,7 @@ runuser -u elite -- env \
   LEADS_DB_PATH="$db_path" \
   SITE_ENV=production \
   PYTHONPATH="$CURRENT/site" \
-  "$VENV_PY" "$CURRENT/site/bot.py" --check
+  "$VENV_PY" "$CURRENT/site/bot_entry.py" --check
 curl -fsS http://127.0.0.1:8000/healthz >/dev/null
 unset BOT_TOKEN TELEGRAM_BOT_TOKEN encryption_key db_path
 
