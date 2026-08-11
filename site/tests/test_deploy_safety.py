@@ -36,6 +36,13 @@ class DeploySafetyTests(unittest.TestCase):
         self.assertNotIn("systemctl enable --now elite-bot.service", text)
         self.assertNotIn("elite-configure-telegram", text)
 
+    def test_updater_generates_server_only_lead_secrets(self):
+        text = self.read("update.sh")
+        self.assertIn("ensure_env_secret LEADS_ENCRYPTION_KEY", text)
+        self.assertIn("ensure_env_secret IP_HASH_SALT", text)
+        self.assertIn("chmod 600 \"$env_file\"", text)
+        self.assertIn("chown root:root \"$env_file\"", text)
+
     def test_updater_builds_candidate_before_switch(self):
         text = self.read("update.sh")
         self.assertIn("CANDIDATE_PORT=18000", text)
