@@ -20,7 +20,7 @@ if [ ! -x "$VENV_PY" ]; then
   exit 1
 fi
 
-read -r -s -p "Telegram BotFather token for @${EXPECTED_USERNAME} (hidden): " BOT_TOKEN
+read -r -s -p "Telegram BotFather token (hidden): " BOT_TOKEN
 echo
 if [ -z "$BOT_TOKEN" ]; then
   echo "Bot token is required." >&2
