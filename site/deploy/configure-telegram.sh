@@ -38,8 +38,9 @@ import sys
 import urllib.request
 
 token = os.environ["TELEGRAM_BOT_TOKEN"]
+base = f"https://api.telegram.org/bot{token}"
 try:
-    with urllib.request.urlopen(f"https://api.telegram.org/bot{token}/getMe", timeout=12) as response:
+    with urllib.request.urlopen(base + "/getMe", timeout=12) as response:
         data = json.load(response)
 except Exception:
     print("Could not validate token against Telegram Bot API.", file=sys.stderr)
@@ -58,6 +59,45 @@ if [ "${DETECTED_USERNAME,,}" != "${BOT_USERNAME,,}" ]; then
 fi
 
 echo "Telegram token validated for @${DETECTED_USERNAME}"
+
+# This service uses long polling. Remove any old webhook and register the
+# operator commands before the systemd service starts polling.
+TELEGRAM_BOT_TOKEN="$BOT_TOKEN" "$VENV_PY" - <<'PY'
+import json
+import os
+import urllib.request
+
+token = os.environ["TELEGRAM_BOT_TOKEN"]
+base = f"https://api.telegram.org/bot{token}"
+
+def call(method: str, payload: dict) -> dict:
+    req = urllib.request.Request(
+        base + "/" + method,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=12) as response:
+        data = json.load(response)
+    if not data.get("ok"):
+        raise RuntimeError(method + " failed")
+    return data
+
+call("deleteWebhook", {"drop_pending_updates": False})
+call(
+    "setMyCommands",
+    {
+        "commands": [
+            {"command": "admin", "description": "Подключить чат менеджера"},
+            {"command": "leads", "description": "Последние заявки"},
+            {"command": "stats", "description": "Сводка по заявкам"},
+            {"command": "lead", "description": "Карточка заявки по номеру"},
+            {"command": "note", "description": "Добавить заметку к заявке"},
+            {"command": "help", "description": "Команды Elite менеджера"},
+        ]
+    },
+)
+print("Telegram polling mode and manager commands configured")
+PY
 
 set_env() {
   local key="$1"
