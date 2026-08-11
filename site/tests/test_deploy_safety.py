@@ -67,7 +67,8 @@ class DeploySafetyTests(unittest.TestCase):
         updater = self.read("bot-update.sh")
         self.assertIn("run_db_migration", updater)
         self.assertIn('migrate-bot-db.py', updater)
-        self.assertLess(updater.index('run_db_migration "$RELEASE"'), updater.index('systemctl restart elite-bot.service'))
+        activation = updater.split('atomic_link "$RELEASE" "$CURRENT"', 1)[1]
+        self.assertLess(activation.index('run_db_migration "$RELEASE"'), activation.index('systemctl restart elite-bot.service'))
 
     def test_updater_builds_candidate_before_switch(self):
         text = self.read("update.sh")
