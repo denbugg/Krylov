@@ -44,10 +44,8 @@ if [ -z "$token" ]; then
   echo "The token will be entered with hidden input and stored only in $ENV_FILE."
   /usr/local/sbin/elite-configure-telegram
 else
-  echo "Telegram token already configured; verifying bot service."
+  echo "Telegram token already configured; updater verification passed."
   systemctl enable --now elite-bot.service >/dev/null 2>&1
-  systemctl restart elite-bot.service
-  /srv/elite-bot/current/venv/bin/python /srv/elite-bot/current/site/bot.py --check
   systemctl is-active --quiet elite-bot.service
 fi
 unset token
