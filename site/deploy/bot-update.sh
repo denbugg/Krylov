@@ -18,6 +18,7 @@ RELEASES=/srv/elite-bot/releases
 CURRENT=/srv/elite-bot/current
 PREVIOUS=/srv/elite-bot/previous
 STATE_DIR=/var/lib/elite
+ENV_FILE=/etc/elite/elite.env
 TMP_DIR="$(mktemp -d /tmp/elite-bot-update.XXXXXX)"
 SWITCHED=0
 OLD_RELEASE=""
@@ -28,6 +29,38 @@ chmod 0700 "$TMP_DIR"
 
 bot_git() {
   runuser -u elite -- git -C "$REPO" "$@"
+}
+
+env_value() {
+  local key="$1"
+  sed -n "s/^${key}=//p" "$ENV_FILE" 2>/dev/null | tail -n 1
+}
+
+run_bot_check() {
+  local release="$1"
+  local token
+  local encryption_key
+  local db_path
+  token="$(env_value TELEGRAM_BOT_TOKEN)"
+  encryption_key="$(env_value LEADS_ENCRYPTION_KEY)"
+  db_path="$(env_value LEADS_DB_PATH)"
+  db_path="${db_path:-/var/lib/elite/leads.sqlite3}"
+  runuser -u elite -- env \
+    TELEGRAM_BOT_TOKEN="$token" \
+    LEADS_ENCRYPTION_KEY="$encryption_key" \
+    LEADS_DB_PATH="$db_path" \
+    SITE_ENV=production \
+    PYTHONPATH="$release/site" \
+    "$release/venv/bin/python" "$release/site/bot.py" --check
+}
+
+run_db_migration() {
+  local release="$1"
+  local db_path
+  db_path="$(env_value LEADS_DB_PATH)"
+  db_path="${db_path:-/var/lib/elite/leads.sqlite3}"
+  runuser -u elite -- env LEADS_DB_PATH="$db_path" \
+    "$release/venv/bin/python" "$release/site/deploy/migrate-bot-db.py"
 }
 
 atomic_link() {
@@ -85,7 +118,7 @@ restore_old_release() {
     echo "Bot activation failed; restoring $(basename "$OLD_RELEASE" | cut -c1-7)" >&2
     atomic_link "$OLD_RELEASE" "$CURRENT"
     install_runtime "$OLD_RELEASE" || true
-    token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
+    token="$(env_value TELEGRAM_BOT_TOKEN)"
     [ -n "$token" ] && systemctl restart elite-bot.service >/dev/null 2>&1 || true
   else
     rm -f "$CURRENT"
@@ -112,10 +145,13 @@ if [ "$TARGET" = "$DEPLOYED_SHA" ] && [ -n "$OLD_RELEASE" ]; then
     PYTHONPATH="$CURRENT/site" "$CURRENT/venv/bin/python" -m unittest discover -s tests -p 'test_*.py' -v
   )
   install_runtime "$CURRENT"
-  token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
+  run_db_migration "$CURRENT"
+  token="$(env_value TELEGRAM_BOT_TOKEN)"
   if [ -n "$token" ]; then
     systemctl enable --now elite-bot.service >/dev/null 2>&1
-    "$CURRENT/venv/bin/python" "$CURRENT/site/bot.py" --check
+    systemctl restart elite-bot.service
+    run_bot_check "$CURRENT"
+    systemctl is-active --quiet elite-bot.service
   fi
   exit 0
 fi
@@ -129,12 +165,13 @@ fi
 atomic_link "$RELEASE" "$CURRENT"
 SWITCHED=1
 install_runtime "$RELEASE"
+run_db_migration "$RELEASE"
 
-token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
+token="$(env_value TELEGRAM_BOT_TOKEN)"
 if [ -n "$token" ]; then
   systemctl enable --now elite-bot.service >/dev/null 2>&1
   systemctl restart elite-bot.service
-  "$CURRENT/venv/bin/python" "$CURRENT/site/bot.py" --check
+  run_bot_check "$CURRENT"
   systemctl is-active --quiet elite-bot.service
 else
   echo "Telegram token is not configured yet; bot code deployed but service remains stopped."
