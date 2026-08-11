@@ -22,7 +22,7 @@ class BotEntryContractTests(unittest.TestCase):
 
     def test_token_configuration_has_single_hidden_prompt(self):
         text = (ROOT / "deploy" / "configure-telegram.sh").read_text(encoding="utf-8")
-        self.assertIn('Telegram BotFather token for @${EXPECTED_USERNAME} (hidden): ', text)
+        self.assertIn('Telegram BotFather token (hidden): ', text)
         self.assertNotIn('Telegram bot username [', text)
         self.assertIn('/getMe', text)
         self.assertIn('requests.post', text)
