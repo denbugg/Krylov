@@ -24,13 +24,23 @@ class DeploySafetyTests(unittest.TestCase):
         self.assertNotIn("listen [::]:443 ssl http2;", text)
         self.assertEqual(text.count("http2 on;"), 2)
 
-    def test_runtime_uses_atomic_current_release(self):
+    def test_site_and_bot_have_independent_release_roots(self):
         site_service = self.read("elite.service")
         bot_service = self.read("elite-bot.service")
         self.assertIn("WorkingDirectory=/srv/elite/current/site", site_service)
         self.assertIn("/srv/elite/current/venv/bin/gunicorn", site_service)
-        self.assertIn("WorkingDirectory=/srv/elite/current/site", bot_service)
-        self.assertIn("/srv/elite/current/venv/bin/python", bot_service)
+        self.assertIn("WorkingDirectory=/srv/elite-bot/current/site", bot_service)
+        self.assertIn("/srv/elite-bot/current/venv/bin/python", bot_service)
+
+    def test_bot_autodeploy_is_present(self):
+        updater = self.read("bot-update.sh")
+        bootstrap = self.read("bot-bootstrap.sh")
+        self.assertIn("REPO=/srv/elite-bot/repo", updater)
+        self.assertIn("CURRENT=/srv/elite-bot/current", updater)
+        self.assertIn("origin elite-bot", updater)
+        self.assertIn("bot-deployed-sha", updater)
+        self.assertIn("/srv/elite-bot/repo", bootstrap)
+        self.assertTrue((DEPLOY / "elite-bot-autodeploy.timer").is_file())
 
     def test_updater_builds_candidate_before_switch(self):
         text = self.read("update.sh")
@@ -43,7 +53,7 @@ class DeploySafetyTests(unittest.TestCase):
 
     def test_atomic_link_helpers_are_nounset_safe(self):
         unsafe = 'local target="$1" link="$2" tmp="${link}.new"'
-        for name in ("update.sh", "rollback.sh"):
+        for name in ("update.sh", "rollback.sh", "bot-update.sh"):
             text = self.read(name)
             self.assertNotIn(unsafe, text, name)
             self.assertIn('local target="$1"', text, name)
@@ -51,7 +61,6 @@ class DeploySafetyTests(unittest.TestCase):
             self.assertIn('local tmp="${link}.new"', text, name)
 
     def test_local_declarations_do_not_reference_same_line_locals(self):
-        """Avoid Bash nounset traps such as: local a="$1" b="$a/x"."""
         declaration = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)=")
         for path in DEPLOY.glob("*.sh"):
             for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -63,7 +72,7 @@ class DeploySafetyTests(unittest.TestCase):
                     if f"${name}" in stripped or f"${{{name}}}" in stripped:
                         self.fail(
                             f"{path.name}:{lineno} declares and references local {name!r} "
-                            "on the same line; this is unsafe with set -u"
+                            "on the same line; unsafe with set -u"
                         )
 
     def test_previous_release_comes_from_success_state(self):
