@@ -51,13 +51,11 @@ install_runtime() {
   install -m 0644 "$site/deploy/fallback.html" "$FALLBACK_DIR/index.html"
   install -m 0755 "$site/deploy/update.sh" /usr/local/sbin/elite-update
   install -m 0755 "$site/deploy/rollback.sh" /usr/local/sbin/elite-rollback
-  [ -f "$site/deploy/configure-telegram.sh" ] && install -m 0755 "$site/deploy/configure-telegram.sh" /usr/local/sbin/elite-configure-telegram
   [ -f "$site/deploy/security-smoke.sh" ] && install -m 0755 "$site/deploy/security-smoke.sh" /usr/local/sbin/elite-security-smoke
   [ -f "$site/deploy/backup-leads.sh" ] && install -m 0755 "$site/deploy/backup-leads.sh" /usr/local/sbin/elite-backup-leads
   [ -f "$site/deploy/watchdog.sh" ] && install -m 0755 "$site/deploy/watchdog.sh" /usr/local/sbin/elite-watchdog
 
   install -m 0644 "$site/deploy/elite.service" /etc/systemd/system/elite.service
-  [ -f "$site/deploy/elite-bot.service" ] && install -m 0644 "$site/deploy/elite-bot.service" /etc/systemd/system/elite-bot.service
   [ -f "$site/deploy/elite-autodeploy.service" ] && install -m 0644 "$site/deploy/elite-autodeploy.service" /etc/systemd/system/elite-autodeploy.service
   [ -f "$site/deploy/elite-autodeploy.timer" ] && install -m 0644 "$site/deploy/elite-autodeploy.timer" /etc/systemd/system/elite-autodeploy.timer
   [ -f "$site/deploy/elite-backup.service" ] && install -m 0644 "$site/deploy/elite-backup.service" /etc/systemd/system/elite-backup.service
@@ -145,8 +143,6 @@ restore_old_release() {
     atomic_link "$OLD_RELEASE" "$CURRENT"
     install_runtime "$OLD_RELEASE" || true
     systemctl restart elite.service || true
-    token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
-    [ -n "$token" ] && systemctl restart elite-bot.service >/dev/null 2>&1 || true
     systemctl reload nginx || true
   else
     echo "Activation failed before any successful production release; clearing uncommitted current symlink" >&2
@@ -207,13 +203,6 @@ systemctl enable --now elite.service
 systemctl restart elite.service
 systemctl reload nginx
 curl --retry 12 --retry-delay 1 --retry-connrefused -fsS http://127.0.0.1:8000/healthz >/dev/null
-
-token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
-if [ -n "$token" ] && [ -f /etc/systemd/system/elite-bot.service ]; then
-  systemctl enable --now elite-bot.service
-  systemctl restart elite-bot.service
-  systemctl is-active --quiet elite-bot.service
-fi
 
 domain="$(sed -n 's/^SITE_DOMAIN=//p' /etc/elite/elite.env | tail -n 1)"
 if [ -f "/etc/letsencrypt/live/$domain/fullchain.pem" ] && [ -x /usr/local/sbin/elite-security-smoke ]; then
