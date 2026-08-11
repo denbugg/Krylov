@@ -26,11 +26,15 @@ class DeploySafetyTests(unittest.TestCase):
 
     def test_runtime_uses_atomic_current_release(self):
         site_service = self.read("elite.service")
-        bot_service = self.read("elite-bot.service")
         self.assertIn("WorkingDirectory=/srv/elite/current/site", site_service)
         self.assertIn("/srv/elite/current/venv/bin/gunicorn", site_service)
-        self.assertIn("WorkingDirectory=/srv/elite/current/site", bot_service)
-        self.assertIn("/srv/elite/current/venv/bin/python", bot_service)
+
+    def test_site_updater_does_not_own_bot_runtime(self):
+        text = self.read("update.sh")
+        self.assertNotIn("/etc/systemd/system/elite-bot.service", text)
+        self.assertNotIn("systemctl restart elite-bot.service", text)
+        self.assertNotIn("systemctl enable --now elite-bot.service", text)
+        self.assertNotIn("elite-configure-telegram", text)
 
     def test_updater_builds_candidate_before_switch(self):
         text = self.read("update.sh")
