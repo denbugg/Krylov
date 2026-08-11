@@ -42,6 +42,33 @@ class DeploySafetyTests(unittest.TestCase):
         self.assertIn("/srv/elite-bot/repo", bootstrap)
         self.assertTrue((DEPLOY / "elite-bot-autodeploy.timer").is_file())
 
+    def test_bot_bootstrap_requests_secure_configuration_when_token_missing(self):
+        bootstrap = self.read("bot-bootstrap.sh")
+        configure = self.read("configure-telegram.sh")
+        self.assertIn("/usr/local/sbin/elite-configure-telegram", bootstrap)
+        self.assertIn('read -r -s -p "Telegram BotFather token (hidden): "', configure)
+        self.assertIn('/getMe', configure)
+        self.assertIn('deleteWebhook', configure)
+        self.assertIn('setMyCommands', configure)
+        self.assertIn('TELEGRAM_ADMIN_USERNAME "Undina_007"', configure)
+
+    def test_bot_runtime_check_uses_server_only_environment(self):
+        updater = self.read("bot-update.sh")
+        configure = self.read("configure-telegram.sh")
+        self.assertIn("run_bot_check", updater)
+        self.assertIn('LEADS_ENCRYPTION_KEY="$encryption_key"', updater)
+        self.assertIn('TELEGRAM_BOT_TOKEN="$token"', updater)
+        self.assertIn('LEADS_DB_PATH="$db_path"', updater)
+        self.assertIn('LEADS_ENCRYPTION_KEY="$encryption_key"', configure)
+        self.assertIn('TELEGRAM_BOT_TOKEN="$BOT_TOKEN"', configure)
+        self.assertIn('LEADS_DB_PATH="$db_path"', configure)
+
+    def test_bot_db_migration_runs_before_service_activation(self):
+        updater = self.read("bot-update.sh")
+        self.assertIn("run_db_migration", updater)
+        self.assertIn('migrate-bot-db.py', updater)
+        self.assertLess(updater.index('run_db_migration "$RELEASE"'), updater.index('systemctl restart elite-bot.service'))
+
     def test_updater_builds_candidate_before_switch(self):
         text = self.read("update.sh")
         self.assertIn("CANDIDATE_PORT=18000", text)
