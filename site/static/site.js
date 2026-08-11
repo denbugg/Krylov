@@ -1,27 +1,83 @@
 (() => {
-  const hero=document.querySelector('.hero'), sticky=document.querySelector('[data-sticky]'), sheet=document.querySelector('[data-sheet]'), form=document.querySelector('#lead-form');
-  let source='unknown';
-  const telegramUrl=(document.body.dataset.telegramUrl||'').trim();
-  const telegramForSource=(src)=>{
-    if(!telegramUrl)return '';
-    try{
-      const u=new URL(telegramUrl);
-      if(u.hostname==='t.me'&&u.searchParams.has('start'))u.searchParams.set('start',(src||'site').slice(0,64).replace(/[^A-Za-z0-9_-]/g,'_'));
-      return u.toString();
-    }catch(_){return telegramUrl}
+  const hero = document.querySelector('.hero');
+  const sticky = document.querySelector('[data-sticky]');
+  const form = document.querySelector('#lead-form');
+  const phone = form?.querySelector('input[name="phone"]');
+  let source = 'callback_block';
+
+  const telegramUrl = (document.body.dataset.telegramUrl || '').trim();
+  const telegramForSource = (src) => {
+    if (!telegramUrl) return '';
+    try {
+      const url = new URL(telegramUrl);
+      if (url.hostname === 't.me' && url.searchParams.has('start')) {
+        url.searchParams.set(
+          'start',
+          (src || 'site').slice(0, 64).replace(/[^A-Za-z0-9_-]/g, '_')
+        );
+      }
+      return url.toString();
+    } catch (_) {
+      return telegramUrl;
+    }
   };
-  if(hero&&sticky){new IntersectionObserver(([e])=>sticky.classList.toggle('is-visible',!e.isIntersecting),{threshold:.12}).observe(hero)}
-  document.querySelectorAll('[data-telegram]').forEach(btn=>btn.addEventListener('click',()=>{
-    source=btn.dataset.source||'site';
-    const href=telegramForSource(source);
-    if(href){window.location.href=href;return}
-    sheet?.classList.add('open');sheet?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(form?.source)form.source.value=source;
-  }));
-  document.querySelectorAll('[data-connect]').forEach(btn=>btn.addEventListener('click',()=>{source=btn.dataset.source||'unknown';sheet?.classList.add('open');sheet?.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(form?.source)form.source.value=source}));
-  const close=()=>{sheet?.classList.remove('open');sheet?.setAttribute('aria-hidden','true');document.body.style.overflow=''};
-  document.querySelector('[data-close]')?.addEventListener('click',close);sheet?.addEventListener('click',e=>{if(e.target===sheet)close()});document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
-  form?.addEventListener('submit',async e=>{e.preventDefault();const status=form.querySelector('.form-status'),button=form.querySelector('button[type=submit]');status.textContent='Отправляем…';button.disabled=true;
-    const payload=Object.fromEntries(new FormData(form).entries());payload.page=location.pathname;payload.referrer=document.referrer;payload.preferred_channel='callback';payload.utm=Object.fromEntries([...new URLSearchParams(location.search)].filter(([k])=>k.startsWith('utm_')));
-    try{const r=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw new Error();status.textContent='Готово. Заявка сохранена — мы свяжемся с вами.';form.reset();form.source.value=source}
-    catch(_){status.textContent='Не получилось отправить. Напишите нам в Telegram — там ответим быстрее.'}finally{button.disabled=false}});
+
+  if (hero && sticky) {
+    new IntersectionObserver(
+      ([entry]) => sticky.classList.toggle('is-visible', !entry.isIntersecting),
+      { threshold: 0.12 }
+    ).observe(hero);
+  }
+
+  document.querySelectorAll('[data-callback]').forEach((link) => {
+    link.addEventListener('click', () => {
+      source = link.dataset.source || 'callback_block';
+      if (form?.source) form.source.value = source;
+      window.setTimeout(() => phone?.focus({ preventScroll: true }), 500);
+    });
+  });
+
+  document.querySelectorAll('[data-telegram-link]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const href = telegramForSource(link.dataset.source || 'site');
+      if (!href) return;
+      event.preventDefault();
+      window.location.href = href;
+    });
+  });
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const status = form.querySelector('.form-status');
+    const button = form.querySelector('button[type="submit"]');
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.page = location.pathname;
+    payload.referrer = document.referrer;
+    payload.preferred_channel = 'callback';
+    payload.source = payload.source || source;
+    payload.lead_type = payload.lead_type || 'trial_now';
+    payload.utm = Object.fromEntries(
+      [...new URLSearchParams(location.search)].filter(([key]) => key.startsWith('utm_'))
+    );
+
+    status.textContent = 'Отправляем…';
+    button.disabled = true;
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('lead_submit_failed');
+      status.textContent = 'Готово. Заявка принята — администратор перезвонит вам.';
+      form.reset();
+      source = 'callback_block';
+      if (form.source) form.source.value = source;
+      if (form.lead_type) form.lead_type.value = 'trial_now';
+    } catch (_) {
+      status.textContent = 'Не получилось отправить. Позвоните нам или напишите в Telegram.';
+    } finally {
+      button.disabled = false;
+    }
+  });
 })();
