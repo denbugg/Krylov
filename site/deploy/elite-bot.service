@@ -11,6 +11,7 @@ User=elite
 Group=www-data
 WorkingDirectory=/srv/elite-bot/current/site
 EnvironmentFile=/etc/elite/elite.env
+ExecStartPre=/srv/elite-bot/current/venv/bin/python /srv/elite-bot/current/site/deploy/migrate-bot-db.py
 ExecStart=/srv/elite-bot/current/venv/bin/python /srv/elite-bot/current/site/bot.py
 Restart=on-failure
 RestartSec=4
