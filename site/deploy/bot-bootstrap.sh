@@ -8,9 +8,10 @@ fi
 
 REPO_URL="${GIT_REPO_URL:-https://github.com/denbugg/Krylov.git}"
 REPO=/srv/elite-bot/repo
+ENV_FILE=/etc/elite/elite.env
 
-if [ ! -f /etc/elite/elite.env ]; then
-  echo "Missing /etc/elite/elite.env. Bootstrap the ELITE site first." >&2
+if [ ! -f "$ENV_FILE" ]; then
+  echo "Missing $ENV_FILE. Bootstrap the ELITE site first." >&2
   exit 1
 fi
 if ! id -u elite >/dev/null 2>&1; then
@@ -36,18 +37,25 @@ fi
 install -m 0755 "$REPO/site/deploy/bot-update.sh" /usr/local/sbin/elite-bot-update
 /usr/local/sbin/elite-bot-update
 
+token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' "$ENV_FILE" | tail -n 1)"
+if [ -z "$token" ]; then
+  echo
+  echo "Bot code is deployed. Telegram BotFather token is required to start @rg_elite_bot."
+  echo "The token will be entered with hidden input and stored only in $ENV_FILE."
+  /usr/local/sbin/elite-configure-telegram
+else
+  echo "Telegram token already configured; verifying bot service."
+  systemctl enable --now elite-bot.service >/dev/null 2>&1
+  systemctl restart elite-bot.service
+  /srv/elite-bot/current/venv/bin/python /srv/elite-bot/current/site/bot.py --check
+  systemctl is-active --quiet elite-bot.service
+fi
+unset token
+
 echo
 echo "ELITE bot bootstrap OK"
 echo "Current bot release: $(basename "$(readlink -f /srv/elite-bot/current)")"
+echo "Bot service: $(systemctl is-active elite-bot.service 2>/dev/null || echo inactive)"
 echo "Autodeploy timer: $(systemctl is-active elite-bot-autodeploy.timer 2>/dev/null || echo inactive)"
-if grep -q '^TELEGRAM_BOT_TOKEN=.$' /etc/elite/elite.env 2>/dev/null; then
-  echo "Telegram token: configured"
-else
-  token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' /etc/elite/elite.env | tail -n 1)"
-  if [ -n "$token" ]; then
-    echo "Telegram token: configured"
-  else
-    echo "Telegram token: not configured"
-    echo "Next: /usr/local/sbin/elite-configure-telegram"
-  fi
-fi
+echo "Manager: https://t.me/rg_elite_bot"
+echo "Next: open @rg_elite_bot from @Undina_007 and send /admin once to bind the operator chat."
