@@ -1,0 +1,12 @@
+[Unit]
+Description=Check ELITE Telegram manager branch for updates
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+RandomizedDelaySec=20s
+Persistent=true
+Unit=elite-bot-autodeploy.service
+
+[Install]
+WantedBy=timers.target
