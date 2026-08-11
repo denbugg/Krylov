@@ -41,12 +41,56 @@ atomic_link() {
   mv -Tf "$tmp" "$link"
 }
 
+ensure_env_secret() {
+  local key="$1"
+  local env_file=/etc/elite/elite.env
+  local current
+  current="$(sed -n "s/^${key}=//p" "$env_file" | tail -n 1)"
+  if [ -n "$current" ]; then
+    return
+  fi
+  local value
+  value="$(python3 - "$key" <<'PY'
+import base64
+import secrets
+import sys
+
+key = sys.argv[1]
+if key == "LEADS_ENCRYPTION_KEY":
+    print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("ascii"))
+else:
+    print(secrets.token_urlsafe(32))
+PY
+)"
+  if grep -q "^${key}=" "$env_file"; then
+    python3 - "$env_file" "$key" "$value" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+key = sys.argv[2]
+value = sys.argv[3]
+lines = path.read_text(encoding="utf-8").splitlines()
+out = [f"{key}={value}" if line.startswith(key + "=") else line for line in lines]
+path.write_text("\n".join(out) + "\n", encoding="utf-8")
+PY
+  else
+    printf '%s=%s\n' "$key" "$value" >>"$env_file"
+  fi
+  chmod 600 "$env_file"
+  chown root:root "$env_file"
+  echo "Generated server-only $key"
+}
+
 install_runtime() {
   local release="$1"
   local site="${release}/site"
   mkdir -p "$STATE_DIR" "$FALLBACK_DIR"
   chown elite:www-data "$STATE_DIR"
   chmod 0750 "$STATE_DIR"
+
+  ensure_env_secret LEADS_ENCRYPTION_KEY
+  ensure_env_secret IP_HASH_SALT
 
   install -m 0644 "$site/deploy/fallback.html" "$FALLBACK_DIR/index.html"
   install -m 0755 "$site/deploy/update.sh" /usr/local/sbin/elite-update
@@ -89,8 +133,6 @@ build_release() {
     return
   fi
 
-  # A directory without .prepared is an interrupted or failed candidate and
-  # must never be trusted or activated on a retry.
   rm -rf "$release"
   install -d -o elite -g elite "$release"
   echo "Materializing candidate ${target:0:7}..."
@@ -99,7 +141,7 @@ build_release() {
   runuser -u elite -- "$release/venv/bin/pip" install --upgrade pip
   runuser -u elite -- "$release/venv/bin/pip" install -r "$release/site/requirements.txt"
 
-  "$release/venv/bin/python" -m py_compile "$release/site/app.py" "$release/site/wsgi.py" "$release/site/bot.py"
+  "$release/venv/bin/python" -m py_compile "$release/site/app.py" "$release/site/wsgi.py" "$release/site/bot.py" "$release/site/lead_crypto.py"
   echo "Running security/regression tests against candidate..."
   (
     cd "$release/site"
@@ -107,8 +149,6 @@ build_release() {
   )
 
   echo "Starting isolated candidate smoke test on 127.0.0.1:${CANDIDATE_PORT}..."
-  # runuser inherits root's cwd. Explicitly move to the release before starting
-  # Gunicorn so the unprivileged elite user never needs to traverse /root.
   runuser -u elite -- sh -c "cd '$release/site' && exec env SITE_ENV=staging SITE_DOMAIN=localhost SITE_INDEXABLE=false LEADS_DB_PATH='$TMP_DIR/candidate.sqlite3' '$release/venv/bin/gunicorn' --chdir '$release/site' --workers 1 --bind 127.0.0.1:${CANDIDATE_PORT} --access-logfile /dev/null --error-logfile '$TMP_DIR/candidate.log' wsgi:app" &
   candidate_pid=$!
   candidate_ok=0
@@ -127,8 +167,6 @@ build_release() {
     return 1
   fi
 
-  # Only a candidate that passed compilation, all tests and isolated runtime
-  # health is eligible for reuse/activation.
   touch "$release/.prepared"
   chown elite:elite "$release/.prepared"
 }
@@ -159,8 +197,6 @@ git_elite fetch --prune origin sitest
 TARGET="$(git_elite rev-parse origin/sitest)"
 RELEASE="$RELEASES/$TARGET"
 
-# The deployed-sha file is the authority for the last release that completed
-# activation. A current symlink left by an interrupted first deploy is not.
 DEPLOYED_SHA="$(cat "$STATE_DIR/deployed-sha" 2>/dev/null || true)"
 if [ -n "$DEPLOYED_SHA" ] && [ -f "$RELEASES/$DEPLOYED_SHA/.prepared" ] && [ -d "$RELEASES/$DEPLOYED_SHA/site" ]; then
   OLD_RELEASE="$RELEASES/$DEPLOYED_SHA"
@@ -219,7 +255,6 @@ chown elite:www-data "$STATE_DIR"/*-sha 2>/dev/null || true
 chmod 0640 "$STATE_DIR"/*-sha 2>/dev/null || true
 SWITCHED=0
 
-# Keep current + previous + at most two additional releases for fast/manual recovery.
 current_real="$(readlink -f "$CURRENT")"
 previous_real="$(readlink -f "$PREVIOUS" 2>/dev/null || true)"
 mapfile -t candidates < <(find "$RELEASES" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-)
