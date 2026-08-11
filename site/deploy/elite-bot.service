@@ -1,5 +1,5 @@
 [Unit]
-Description=ELITE Telegram lead bot
+Description=ELITE Telegram lead manager
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=60
@@ -9,9 +9,9 @@ StartLimitBurst=10
 Type=simple
 User=elite
 Group=www-data
-WorkingDirectory=/srv/elite/current/site
+WorkingDirectory=/srv/elite-bot/current/site
 EnvironmentFile=/etc/elite/elite.env
-ExecStart=/srv/elite/current/venv/bin/python /srv/elite/current/site/bot.py
+ExecStart=/srv/elite-bot/current/venv/bin/python /srv/elite-bot/current/site/bot.py
 Restart=on-failure
 RestartSec=4
 UMask=0027
