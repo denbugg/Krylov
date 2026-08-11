@@ -40,6 +40,7 @@ class DeploySafetyTests(unittest.TestCase):
         self.assertIn("origin elite-bot", updater)
         self.assertIn("bot-deployed-sha", updater)
         self.assertIn("/srv/elite-bot/repo", bootstrap)
+        self.assertIn("install -d -m 0755 -o elite -g elite /srv/elite-bot /srv/elite-bot/releases", bootstrap)
         self.assertTrue((DEPLOY / "elite-bot-autodeploy.timer").is_file())
 
     def test_bot_bootstrap_requests_secure_configuration_when_token_missing(self):
