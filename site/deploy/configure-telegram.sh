@@ -10,6 +10,7 @@ ENV_FILE=/etc/elite/elite.env
 CURRENT=/srv/elite-bot/current
 VENV_PY="$CURRENT/venv/bin/python"
 EXPECTED_USERNAME=rg_elite_bot
+export PYTHONPATH="$CURRENT/site"
 
 if [ ! -f "$ENV_FILE" ]; then
   echo "Missing $ENV_FILE. Deploy the site first." >&2
@@ -20,15 +21,15 @@ if [ ! -x "$VENV_PY" ]; then
   exit 1
 fi
 
-read -r -s -p "Telegram BotFather token (hidden): " BOT_TOKEN
+read -r -p "Telegram BotFather token: " BOT_TOKEN
 echo
 if [ -z "$BOT_TOKEN" ]; then
   echo "Bot token is required." >&2
   exit 1
 fi
 
-# One input only. Telegram's official getMe method is specifically intended to
-# test a bot authentication token and returns the bot username on success.
+# sitecustomize.py is loaded through PYTHONPATH and restricts requests/urllib3
+# to IPv4 for this bot process. The VPS currently has an unusable IPv6 route.
 DETECTED_USERNAME="$(TELEGRAM_BOT_TOKEN="$BOT_TOKEN" "$VENV_PY" - <<'PY'
 import os
 import sys
@@ -39,7 +40,7 @@ url = f"https://api.telegram.org/bot{token}/getMe"
 try:
     response = requests.post(url, timeout=15)
 except requests.RequestException as exc:
-    print(f"Telegram API connection failed ({type(exc).__name__}). Check server access to api.telegram.org.", file=sys.stderr)
+    print(f"Telegram API connection failed over IPv4 ({type(exc).__name__}): {exc}", file=sys.stderr)
     raise SystemExit(1)
 if response.status_code != 200:
     description = ""
@@ -50,11 +51,7 @@ if response.status_code != 200:
     suffix = f": {description}" if description else ""
     print(f"Telegram getMe returned HTTP {response.status_code}{suffix}", file=sys.stderr)
     raise SystemExit(1)
-try:
-    data = response.json()
-except ValueError:
-    print("Telegram getMe returned a non-JSON response.", file=sys.stderr)
-    raise SystemExit(1)
+data = response.json()
 result = data.get("result") or {}
 if not data.get("ok") or not result.get("is_bot") or not result.get("username"):
     print("Telegram rejected the token or did not return a bot username.", file=sys.stderr)
@@ -84,7 +81,7 @@ def call(method: str, payload: dict) -> None:
         raise SystemExit(f"Telegram {method} returned HTTP {response.status_code}")
     data = response.json()
     if not data.get("ok"):
-        raise SystemExit(f"Telegram {method} failed")
+        raise SystemExit(f"Telegram {method} failed: {data.get('description') or 'unknown error'}")
 
 call("deleteWebhook", {"drop_pending_updates": False})
 call(
