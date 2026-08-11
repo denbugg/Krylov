@@ -2,12 +2,12 @@
 set -euo pipefail
 
 if [ "${EUID}" -ne 0 ]; then
-  echo "Run as root: sudo /usr/local/sbin/elite-configure-telegram" >&2
+  echo "Run as root: /usr/local/sbin/elite-configure-telegram" >&2
   exit 1
 fi
 
 ENV_FILE=/etc/elite/elite.env
-CURRENT=/srv/elite/current
+CURRENT=/srv/elite-bot/current
 VENV_PY="$CURRENT/venv/bin/python"
 
 if [ ! -f "$ENV_FILE" ]; then
@@ -15,17 +15,14 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 if [ ! -x "$VENV_PY" ]; then
-  echo "Missing current ELITE release. Deploy the site first." >&2
+  echo "Missing ELITE bot release. Run bot-bootstrap first." >&2
   exit 1
 fi
 
-read -r -p "Telegram bot username (without @): " BOT_USERNAME
+read -r -p "Telegram bot username [rg_elite_bot]: " BOT_USERNAME
+BOT_USERNAME="${BOT_USERNAME:-rg_elite_bot}"
 BOT_USERNAME="${BOT_USERNAME#@}"
 BOT_USERNAME="${BOT_USERNAME// /}"
-if [ -z "$BOT_USERNAME" ]; then
-  echo "Bot username is required." >&2
-  exit 1
-fi
 
 read -r -s -p "Telegram BotFather token (hidden): " BOT_TOKEN
 echo
@@ -34,7 +31,7 @@ if [ -z "$BOT_TOKEN" ]; then
   exit 1
 fi
 
-TELEGRAM_BOT_TOKEN="$BOT_TOKEN" "$VENV_PY" - <<'PY'
+DETECTED_USERNAME="$(TELEGRAM_BOT_TOKEN="$BOT_TOKEN" "$VENV_PY" - <<'PY'
 import json
 import os
 import sys
@@ -50,11 +47,21 @@ except Exception:
 if not data.get("ok") or not data.get("result", {}).get("is_bot"):
     print("Telegram rejected this bot token.", file=sys.stderr)
     raise SystemExit(1)
-print("Telegram token validated for @" + data["result"].get("username", "<unknown>"))
+print(data["result"].get("username", ""))
 PY
+)"
+
+if [ "${DETECTED_USERNAME,,}" != "${BOT_USERNAME,,}" ]; then
+  echo "Token belongs to @${DETECTED_USERNAME}, not @${BOT_USERNAME}. Refusing to configure." >&2
+  unset BOT_TOKEN
+  exit 1
+fi
+
+echo "Telegram token validated for @${DETECTED_USERNAME}"
 
 set_env() {
-  local key="$1" value="$2"
+  local key="$1"
+  local value="$2"
   "$VENV_PY" - "$ENV_FILE" "$key" "$value" <<'PY'
 from pathlib import Path
 import sys
@@ -81,34 +88,28 @@ set_env TELEGRAM_BOT_TOKEN "$BOT_TOKEN"
 set_env TELEGRAM_BOT_USERNAME "$BOT_USERNAME"
 set_env TELEGRAM_ADMIN_USERNAME "Undina_007"
 
-CURRENT_ADMIN_TOKEN="$(sed -n 's/^ADMIN_TOKEN=//p' "$ENV_FILE" | tail -n 1)"
-if [ -z "$CURRENT_ADMIN_TOKEN" ]; then
-  GENERATED_ADMIN_TOKEN="$($VENV_PY - <<'PY'
-import secrets
-print(secrets.token_urlsafe(36))
-PY
-)"
-  set_env ADMIN_TOKEN "$GENERATED_ADMIN_TOKEN"
-fi
-
 chmod 600 "$ENV_FILE"
 chown root:root "$ENV_FILE"
 systemctl daemon-reload
 systemctl enable --now elite-bot.service
 systemctl restart elite-bot.service
+# The site process reads TELEGRAM_BOT_USERNAME from the same environment file;
+# restart it so public Telegram CTAs immediately point to @rg_elite_bot.
 systemctl restart elite.service
 
 sleep 1
 if ! systemctl is-active --quiet elite-bot.service; then
   echo "elite-bot failed to start. Recent log:" >&2
-  journalctl -u elite-bot.service -n 30 --no-pager >&2 || true
+  journalctl -u elite-bot.service -n 40 --no-pager >&2 || true
+  unset BOT_TOKEN
   exit 1
 fi
-curl -fsS http://127.0.0.1:8000/healthz >/dev/null
 
+"$VENV_PY" "$CURRENT/site/bot.py" --check
+curl -fsS http://127.0.0.1:8000/healthz >/dev/null
 unset BOT_TOKEN TELEGRAM_BOT_TOKEN
 
 echo
-echo "Telegram bot is active."
-echo "Site deep link: https://t.me/${BOT_USERNAME}?start=hero"
-echo "Next: open the bot from @Undina_007 and send /admin once to bind the operator chat."
+echo "Elite менеджер is active as @${BOT_USERNAME}."
+echo "Site deep link: https://t.me/${BOT_USERNAME}?start=site"
+echo "Open @${BOT_USERNAME} from @Undina_007 and send /admin once to bind the operator chat."
