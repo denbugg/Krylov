@@ -6,6 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+TEST_ENCRYPTION_KEY = "6FaL9VZumMZFCkvyB_SwIbZm02c2YhI2Lftc6NJaNz0="
+
 
 class BotSecurityTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -15,9 +17,11 @@ class BotSecurityTests(unittest.TestCase):
             os.environ,
             {
                 "LEADS_DB_PATH": self.db_path,
+                "LEADS_ENCRYPTION_KEY": TEST_ENCRYPTION_KEY,
                 "TELEGRAM_BOT_TOKEN": "dummy-token",
                 "TELEGRAM_ADMIN_USERNAME": "undina_007",
                 "TELEGRAM_ADMIN_CHAT_ID": "",
+                "SITE_ENV": "production",
             },
             clear=False,
         )
@@ -34,8 +38,7 @@ class BotSecurityTests(unittest.TestCase):
 
     def test_contact_keyboard_requests_own_contact(self) -> None:
         keyboard = self.bot.contact_keyboard()
-        button = keyboard["keyboard"][0][0]
-        self.assertTrue(button.get("request_contact"))
+        self.assertTrue(keyboard["keyboard"][0][0].get("request_contact"))
 
     def test_foreign_contact_is_rejected(self) -> None:
         message = {
@@ -52,25 +55,20 @@ class BotSecurityTests(unittest.TestCase):
         self.assertTrue(self.bot.is_admin_user({"username": "Undina_007"}, 777))
         self.assertFalse(self.bot.is_admin_user({"username": "someone_else"}, 777))
 
-    def test_telegram_lead_copies_profile_identity_and_contact(self) -> None:
-        user = {
-            "id": 123,
-            "username": "parent_user",
-            "first_name": "Анна",
-            "last_name": "Иванова",
-        }
+    def test_telegram_lead_encrypts_identity_and_contact(self) -> None:
+        user = {"id": 123, "username": "parent_user", "first_name": "Анна", "last_name": "Иванова"}
         self.bot.upsert_session(user, source="site_hero", state="await_contact", reset_lead=True)
         lead_id = self.bot.create_lead_from_contact(user, "+79161234567")
-        conn = self.bot.db()
-        row = conn.execute("SELECT * FROM leads WHERE id=?", (lead_id,)).fetchone()
-        conn.close()
-        self.assertEqual(row["phone"], "+79161234567")
-        self.assertEqual(row["name"], "Анна Иванова")
+        row = self.bot.get_lead(lead_id)
+        self.assertTrue(row["phone"].startswith("enc:v1:"))
+        self.assertTrue(row["name"].startswith("enc:v1:"))
+        self.assertEqual(self.bot.decrypt_text(row["phone"]), "+79161234567")
+        self.assertEqual(self.bot.decrypt_text(row["name"]), "Анна Иванова")
         self.assertEqual(row["telegram_user_id"], 123)
-        self.assertEqual(row["telegram_username"], "parent_user")
+        self.assertIsNone(row["telegram_username"])
         self.assertEqual(row["source"], "telegram_bot:site_hero")
 
-    def test_manager_can_update_lead_status_and_note(self) -> None:
+    def test_manager_can_update_status_and_encrypted_note(self) -> None:
         user = {"id": 123, "first_name": "Анна"}
         self.bot.upsert_session(user, source="test", state="await_contact", reset_lead=True)
         lead_id = self.bot.create_lead_from_contact(user, "+79161234567")
@@ -78,13 +76,14 @@ class BotSecurityTests(unittest.TestCase):
         self.assertTrue(self.bot.set_lead_note(lead_id, "Перезвонить после 18:00"))
         row = self.bot.get_lead(lead_id)
         self.assertEqual(row["status"], "trial_booked")
-        self.assertEqual(row["note"], "Перезвонить после 18:00")
+        self.assertTrue(row["note"].startswith("enc:v1:"))
+        self.assertEqual(self.bot.decrypt_text(row["note"]), "Перезвонить после 18:00")
 
     def test_status_keyboard_never_contains_phone_or_secret(self) -> None:
-        keyboard = self.bot.status_keyboard(42, "new")
-        payload = str(keyboard)
+        payload = str(self.bot.status_keyboard(42, "new"))
         self.assertIn("leadstatus:42:contacted", payload)
         self.assertNotIn("dummy-token", payload)
+        self.assertNotIn(TEST_ENCRYPTION_KEY, payload)
 
     def test_website_lead_is_marked_after_admin_notification(self) -> None:
         conn = self.bot.db()
@@ -95,8 +94,8 @@ class BotSecurityTests(unittest.TestCase):
             """,
             (
                 self.bot.now_iso(),
-                "Мария",
-                "+79160000000",
+                self.bot.encrypt_text("Мария"),
+                self.bot.encrypt_text("+79160000000"),
                 "callback_block",
                 "/",
                 "callback",
