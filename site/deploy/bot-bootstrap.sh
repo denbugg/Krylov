@@ -39,8 +39,8 @@ install -m 0755 "$REPO/site/deploy/bot-update.sh" /usr/local/sbin/elite-bot-upda
 token="$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' "$ENV_FILE" | tail -n 1)"
 if [ -z "$token" ]; then
   echo
-  echo "Bot code is deployed. Telegram BotFather token is required to start @rg_elite_bot."
-  echo "The token will be entered with hidden input and stored only in $ENV_FILE."
+  echo "Bot code is deployed. Enter the BotFather token once to start @rg_elite_bot."
+  echo "The token is stored only in $ENV_FILE and is reused by future deploys."
   /usr/local/sbin/elite-configure-telegram
 else
   echo "Telegram token already configured; updater verification passed."
