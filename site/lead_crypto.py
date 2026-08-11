@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import os
 import sqlite3
-from functools import lru_cache
 
 from cryptography.fernet import Fernet, InvalidToken
 
 PREFIX = "enc:v1:"
 
 
-@lru_cache(maxsize=1)
 def _fernet() -> Fernet | None:
     key = os.getenv("LEADS_ENCRYPTION_KEY", "").strip()
     if not key:
@@ -59,9 +57,7 @@ def migrate_lead_pii(conn: sqlite3.Connection) -> None:
     protected = [name for name in ("name", "phone", "question", "note") if name in columns]
     if not protected:
         return
-    rows = conn.execute(
-        "SELECT id, " + ", ".join(protected) + " FROM leads"
-    ).fetchall()
+    rows = conn.execute("SELECT id, " + ", ".join(protected) + " FROM leads").fetchall()
     updates: list[tuple[list[str], list[str | int | None]]] = []
     for row in rows:
         assignments: list[str] = []
